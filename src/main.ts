@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { TUNING } from './content/tuning';
 
 class EmptyScene extends Phaser.Scene {
   constructor() {
@@ -8,8 +9,8 @@ class EmptyScene extends Phaser.Scene {
 
 const game = new Phaser.Game({
   type: Phaser.AUTO,
-  width: 1672,
-  height: 941,
+  width: TUNING.gameW,
+  height: TUNING.gameH,
   backgroundColor: '#FFF4DC',
   scale: {
     mode: Phaser.Scale.FIT,
