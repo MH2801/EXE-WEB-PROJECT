@@ -3,7 +3,7 @@
 ## 1. Hiện trạng
 Nhánh `feat/mvp`: Batch A (Task 1-2) và Batch B (Task 3-5) xong, mỗi task một commit, chưa push. `tsc`, 62 test và `build` đều qua. Chưa có repo GitHub và tài khoản Cloudflare.
 - Task 4 qua review opus (không bị lộ đáp án, không kẹt). Founder đã chọn: khi 4 quả sai đã bị loại, NPC không nói apple nữa (spec §6). Hệ quả: mức gợi ý 2 chỉ còn tới qua `idle`, ngưỡng `missesForLevel2` gần như không bao giờ chạm.
-- `/ponytail-review` chưa chạy được: skill này không có trong danh sách của phiên (báo "Unknown skill"). Cần cài hoặc chạy tay trên diff `041e209..fb0fa25`.
+- `/ponytail-review`: founder sẽ cài trước Batch C. Batch A+B chạy review ở lượt toàn nhánh.
 
 ## 2. Tiếp theo
 1. Bạn quyết: cài/tìm `ponytail-review` rồi chạy trên Batch A+B, hay bỏ qua.

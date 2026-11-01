@@ -294,7 +294,7 @@ public/audio/        tùy chọn, tên file theo ID lời thoại
 | Tự nhận ra apple khi gặp lại | Có, Chưa, hoặc Chưa chơi tới (`recallFirstTry`) |
 | Nên củng cố | Một câu suy ra từ dữ liệu trên |
 
-Kèm dòng ghi rõ: đây là một lần chơi, chưa đo được trình độ; Mimi là nhân vật có kịch bản. Không điểm số, không so sánh với bé khác.
+Kèm dòng ghi rõ: đây là một lần chơi, chưa đo được trình độ; Mimi là nhân vật có kịch bản. Không điểm số, không so sánh với bé khác. Dòng này do scene Khu phụ huynh hiện cố định, không nằm trong dữ liệu `buildReport`.
 
 Khu phụ huynh có thêm công tắc phụ đề tiếng Việt và nút chơi lại (xóa save, có bước xác nhận).
 
@@ -331,13 +331,15 @@ Theo Numbers Policy của skill `game-design`. A: có nguồn. B: giá trị kh�
 | Tương phản chữ quan trọng | ≥ 4.5:1 | A: WCAG 2.1 AA | Công cụ đo | Đổi màu nền chữ |
 | Vùng bấm tối thiểu | 120 đơn vị logic | B, cao hơn mức 44 px của WCAG 2.5.5 vì tay trẻ nhỏ | Bé bấm trúng ngay lần đầu | Tăng lên |
 | Số lần sai trước mức 1 | 2 | B, từ đề xuất đã được Ngọc Minh đồng ý | Bé không bỏ cuộc trước gợi ý | Giảm còn 1 |
-| Số lần sai trước mức 2 | 3 | B | Bé không chờ NPC thay vì tự thử | Tăng lên 4 |
+| Số lần sai trước mức 2 | 3 | B. Chỉ có tác dụng khi còn quả sai chưa loại; mức 1 đã loại thêm một quả nên thực tế mức 2 đến qua đồng hồ rảnh | Bé không chờ NPC thay vì tự thử | Tăng lên 4 |
 | Rảnh trước mức 1 | 25 giây | B | Bé không ngồi im mà chưa có gợi ý | Giảm |
 | Rảnh trước mức 2 | thêm 25 giây | B | Như trên | Giảm |
 | Số lần No với apple trước `tricked` | 3 | B, từ phản hồi ý tưởng | Bé thấy buồn cười | Giảm còn 2 |
 | Dừng hồi hộp trước khi mẹ trả lời | 1,2 giây | B | Bé nhìn chờ, không bấm loạn | Rút ngắn |
 | Tốc độ đi của Mimi: lần mang thứ nhất, từ lần thứ hai | 1 lần, 2 lần tốc độ gốc | B, "nhanh gấp đôi" theo §5.1 | Bé không thấy cảnh lặp nặng nề | Tăng lần thứ hai |
 | Tốc độ đọc | 0,85 lần | B | Người lớn nghe rõ từng từ | Giảm hoặc tăng 0,05 |
+| Cao độ giọng (Mimi, mẹ, NPC, bé, Sổ) | 1,35 / 1,05 / 0,9 / 1,2 / 1,0 | B | Nghe riêng từng nhân vật, Mimi dễ thương nhất | Chỉnh theo tai, bước 0,05 |
+| Tốc độ đi của Mimi | 1 lần, từ lần mang quả thứ hai là 2 lần (§5.1) | B | Cảnh lặp không nặng nề | Chỉnh |
 | Thời hạn tối đa một câu | 1,5 giây + 90 ms mỗi ký tự | B | Không câu nào bị cắt | Tăng |
 | Một lượt đi đúng | khoảng 3 phút | B | Bé không rời mắt | Rút cảnh |
 | Tổng dung lượng tải | ≤ 12 MB | B | `dist/` sau build | Nén hình mạnh hơn |
