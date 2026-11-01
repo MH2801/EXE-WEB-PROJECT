@@ -11,6 +11,9 @@ export const TUNING = {
   speechBaseMs: 1500, // B
   speechPerCharMs: 90, // B
   minHitPx: 120, // B
+  yesFill: 0x1e7a44, // B: white label on it = 5.35:1 (WCAG; spec 14 needs 4.5)
+  noFill: 0xc23a33, // B: white label on it = 5.32:1
+  choiceLabel: '#ffffff', // B
   tapFeedbackMs: 100, // A: Nielsen 1993
   walkSpeed: 1, // B, multiplier of the view's base walking speed (1 = as drawn)
   repeatTripSpeed: 2, // B, same multiplier from the 2nd carry (spec 5.1)

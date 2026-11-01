@@ -240,13 +240,14 @@ export class Mission extends Phaser.Scene {
     const { choiceW: w, choiceH: h } = TUNING;
     const b = makeButton(this, at.x, at.y, {
       label,
+      labelColor: TUNING.choiceLabel,
       w,
       h,
       onTap: () => {
         if (!this.busy) this.dispatch({ t: kind === 'yes' ? 'tapYes' : 'tapNo' });
       },
     }).setDepth(200);
-    const fill = this.add.graphics().fillStyle(kind === 'yes' ? 0x2fa65a : 0xd9534f, 1).fillRoundedRect(-w / 2, -h / 2, w, h, 28);
+    const fill = this.add.graphics().fillStyle(kind === 'yes' ? TUNING.yesFill : TUNING.noFill, 1).fillRoundedRect(-w / 2, -h / 2, w, h, 28);
     // Not colour alone (spec 9): a tick and a cross, always in the same place.
     const mark = this.add.graphics().lineStyle(14, 0xffffff, 1);
     const cx = -w / 2 + 80;

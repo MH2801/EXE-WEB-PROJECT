@@ -19,7 +19,7 @@ Nhánh `feat/mvp`: Batch A, B, C (Task 1-9) xong, mỗi task một commit, chưa
 - Mimi chưa lật hướng khi đi sang trái; chân Mimi nằm sau khung thoại lúc có câu; icon Sổ (ô trắng nền cam) chưa giống quyển sách.
 - Hình nhỏ: biển grape (60x79) yếu nhất, orange (80x80) kế đó; vẫn nhận ra được ở cỡ game, sạp có sẵn quả để đối chiếu. Quả Mimi mang là 0,72 lần, khá nhỏ.
 - `pause()` chưa dừng được file ghi âm (`RECORDED` đang trống).
-- Nút trẻ em đã đổi chữ sang xanh đậm `#16324f` để đạt tương phản 4,5:1.
+- Tương phản chữ nút: Yes/No dùng chữ trắng trên nền đậm hơn (xanh lá `#1e7a44` 5,35:1; đỏ `#c23a33` 5,32:1); các nút khác giữ `#16324f` trên xanh dương (5,13:1).
 
 ## 4. Tiếp theo
 1. Batch D theo [plan](superpowers/plans/2026-11-01-day-1-apple-mvp.md): Task 10 (phản ứng Mimi, âm hiệu ứng), Task 11 (test trình duyệt, review toàn nhánh), Task 12 (phát hành).
