@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="270" viewBox="0 0 320 270" role="img" aria-label="A treasure chest">
+<g stroke="#1B2470" stroke-width="6" stroke-linejoin="round" stroke-linecap="round">
+<rect x="30" y="118" width="260" height="130" rx="22" fill="#FF9226"/>
+<path d="M30 124c0-68 52-100 130-100s130 32 130 100Z" fill="#FFB347"/>
+<path d="M66 124V42h38v82ZM216 124V42h38v82Z" fill="#FFE3A0"/><path d="M66 124h38v124H66ZM216 124h38v124h-38Z" fill="#FFD27A"/>
+<path d="M30 124h260" fill="none"/>
+<rect x="118" y="88" width="84" height="88" rx="24" fill="#FFC83D"/>
+</g>
+<path d="M189.9 134.9L188.7 140.7L180.1 142.7L177.6 146.5L179.0 155.2L174.1 158.5L166.6 153.8L162.2 154.7L157.1 161.9L151.3 160.7L149.3 152.1L145.5 149.6L136.8 151.0L133.5 146.1L138.2 138.6L137.3 134.2L130.1 129.1L131.3 123.3L139.9 121.3L142.4 117.5L141.0 108.8L145.9 105.5L153.4 110.2L157.8 109.3L162.9 102.1L168.7 103.3L170.7 111.9L174.5 114.4L183.2 113.0L186.5 117.9L181.8 125.4L182.7 129.8Z" fill="#FFFFFF" stroke="#1B2470" stroke-width="5" stroke-linejoin="round"/><circle cx="160" cy="132" r="8.4" fill="#1B2470"/>
+<ellipse cx="136" cy="56" rx="18" ry="8" fill="#FFE3A0"/>
+</svg>

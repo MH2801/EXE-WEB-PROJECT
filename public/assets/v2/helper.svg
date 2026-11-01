@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="430" viewBox="0 0 320 430" role="img" aria-label="A helper robot passing by">
+<g transform="rotate(4 150 400)"><g stroke="#1B2470" stroke-width="6" stroke-linejoin="round" stroke-linecap="round">
+<circle cx="150" cy="376" r="42" fill="#D5E6F8"/><circle cx="150" cy="376" r="14" fill="#8FA3C8"/>
+<path d="M92 212C62 232 52 262 58 292" fill="none" stroke-width="26"/><path d="M92 212C62 232 52 262 58 292" fill="none" stroke="#8EE3C0" stroke-width="14"/><circle cx="58" cy="300" r="17" fill="#D6F7E8"/>
+<path d="M150 52V26" fill="none"/><circle cx="150" cy="20" r="11" fill="#FFE75A"/>
+<rect x="76" y="52" width="148" height="300" rx="74" fill="#8EE3C0"/>
+<rect x="104" y="222" width="92" height="92" rx="30" fill="#D6F7E8"/>
+<rect x="100" y="92" width="116" height="78" rx="38" fill="#16206B"/>
+<path d="M248 244c0-28 40-28 40 0" fill="none"/>
+<rect x="226" y="240" width="84" height="86" rx="12" fill="#F7E7C6"/>
+<path d="M214 214C236 212 256 210 268 226" fill="none" stroke-width="26"/><path d="M214 214C236 212 256 210 268 226" fill="none" stroke="#8EE3C0" stroke-width="14"/><circle cx="268" cy="228" r="16" fill="#D6F7E8"/>
+</g>
+<circle cx="150" cy="126" r="11" fill="#5FE0FF"/><circle cx="192" cy="126" r="11" fill="#5FE0FF"/>
+<path d="M158 146c8 7 18 7 26 0" fill="none" stroke="#5FE0FF" stroke-width="6" stroke-linecap="round"/></g>
+</svg>

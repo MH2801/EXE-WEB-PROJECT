@@ -67,6 +67,25 @@ test('missing image still reaches title', async ({ page }) => {
   await waitFor(async () => (await phase(page)) !== 'Title'); // Start was clickable
 });
 
+test('missing or broken svg still reaches title', async ({ page }) => {
+  await page.route('**/v2/mimi_idle.svg', (r) => r.abort());
+  await page.route('**/v2/door.svg', (r) => r.fulfill({ status: 200, contentType: 'image/svg+xml', body: 'not an svg' }));
+  await open(page);
+  const has = await page.evaluate(() => ['v2_mimi_idle', 'v2_door', 'v2_gate'].map((k) => (window as any).__game.textures.exists(k)));
+  expect(has).toEqual([true, true, true]);
+});
+
+test('fonts that never arrive do not block entry', async ({ page }) => {
+  await page.route('**/*.woff2', () => {}); // never answered
+  await open(page);
+});
+
+test('fonts load before the first scene', async ({ page }) => {
+  await open(page);
+  const ok = await page.evaluate(() => [document.fonts.check("800 40px 'Baloo 2'", 'Aạ'), document.fonts.check("700 40px 'Nunito'", 'Aạ')]);
+  expect(ok).toEqual([true, true]);
+});
+
 test('no external requests', async ({ page }) => {
   const foreign: string[] = [];
   page.on('request', (r) => {

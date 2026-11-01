@@ -259,6 +259,7 @@ Tất cả là giá trị khởi đầu (B), nằm trong `tuning.ts`. Cách ki�
 | `bigChestGears` | 3–4 | Theo cảm nhận |
 | `patternB` | R từ 3 | Vào mẫu B quá sớm thì tăng |
 | `patternC` | R từ 5 | Vào mẫu C quá sớm thì tăng |
+| `fontWaitMs` | 2000 | Chữ đổi font giữa chừng thì tăng; vào game thấy chậm thì giảm |
 | Thời gian một phòng | 10–15 giây | Chậm hơn thì cắt thoại |
 | Thời gian một chuyến | 2–4 phút | Dài hơn thì bớt phòng |
 | Số lần nghe từ mới trong chuyến đầu | Ít nhất 6 | Đếm bằng test |

@@ -11,6 +11,7 @@ export const TUNING = {
   speechBaseMs: 1500, // B
   speechPerCharMs: 90, // B
   minHitPx: 120, // B
+  fontWaitMs: 2000, // B, longest wait for fonts before the first scene
   yesFill: 0x1e7a44, // B: white label on it = 5.35:1 (WCAG; spec 14 needs 4.5)
   noFill: 0xc23a33, // B: white label on it = 5.32:1
   choiceLabel: '#ffffff', // B

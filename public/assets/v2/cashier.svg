@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="340" height="430" viewBox="0 0 340 430" role="img" aria-label="The serious robot cashier">
+<g stroke="#1B2470" stroke-width="6" stroke-linejoin="round" stroke-linecap="round">
+<rect x="112" y="346" width="50" height="74" rx="16" fill="#A793EE"/><rect x="178" y="346" width="50" height="74" rx="16" fill="#A793EE"/>
+<path d="M90 256C66 286 58 320 60 350" fill="none" stroke-width="30"/><path d="M90 256C66 286 58 320 60 350" fill="none" stroke="#C9B8FF" stroke-width="18"/><circle cx="60" cy="358" r="21" fill="#E7DEFF"/><path d="M250 256C274 286 282 320 280 350" fill="none" stroke-width="30"/><path d="M250 256C274 286 282 320 280 350" fill="none" stroke="#C9B8FF" stroke-width="18"/><circle cx="280" cy="358" r="21" fill="#E7DEFF"/>
+<rect x="84" y="222" width="172" height="150" rx="34" fill="#C9B8FF"/>
+<rect x="116" y="266" width="108" height="56" rx="12" fill="#16206B"/>
+<rect x="150" y="322" width="40" height="66" rx="4" fill="#FFFFFF"/><path d="M160 340h20M160 356h20M160 372h12" fill="none" stroke-width="4"/>
+<circle cx="44" cy="150" r="16" fill="#A793EE"/><circle cx="296" cy="150" r="16" fill="#A793EE"/>
+<rect x="56" y="70" width="228" height="162" rx="36" fill="#C9B8FF"/>
+<path d="M78 76c0-36 30-50 92-50s92 14 92 50Z" fill="#3A4BC2"/><rect x="60" y="64" width="220" height="24" rx="12" fill="#2C3AA8"/>
+<rect x="80" y="100" width="180" height="112" rx="26" fill="#F5F1FF"/>
+<path d="M170 238l-42-22v44Z" fill="#FFC83D"/><path d="M170 238l42-22v44Z" fill="#FFC83D"/><circle cx="170" cy="238" r="9" fill="#FFC83D"/>
+</g>
+<g fill="#5FE0FF"><circle cx="142" cy="294" r="9"/><circle cx="170" cy="294" r="9"/><circle cx="198" cy="294" r="9"/></g>
+<circle cx="128" cy="146" r="19" fill="#1B2470"/><circle cx="212" cy="146" r="19" fill="#1B2470"/><circle cx="122" cy="154" r="5" fill="#FFFFFF"/><circle cx="206" cy="154" r="5" fill="#FFFFFF"/>
+<path d="M103 146a25 25 0 0 1 50 0Z" fill="#C9B8FF" stroke="#1B2470" stroke-width="6" stroke-linejoin="round"/><path d="M187 146a25 25 0 0 1 50 0Z" fill="#C9B8FF" stroke="#1B2470" stroke-width="6" stroke-linejoin="round"/>
+<path d="M104 124h48" fill="none" stroke="#1B2470" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/><path d="M188 122q24-16 48-4" fill="none" stroke="#1B2470" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M138 182c10-12 24-8 32 0 8-8 22-12 32 0-12 12-24 10-32 3-8 7-20 9-32-3Z" fill="#1B2470"/>
+</svg>

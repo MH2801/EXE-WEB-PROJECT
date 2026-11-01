@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="420" viewBox="0 0 300 420" role="img" aria-label="A door">
+<g stroke="#1B2470" stroke-width="6" stroke-linejoin="round" stroke-linecap="round">
+<rect x="10" y="388" width="280" height="26" rx="12" fill="#C9D8EE"/>
+<path d="M28 394V150a122 122 0 0 1 244 0V394Z" fill="#7C8CF0"/>
+<path d="M58 394V152a92 92 0 0 1 184 0V394Z" fill="#FFF1C9"/>
+<rect x="84" y="284" width="132" height="84" rx="20" fill="#FFE3A0"/>
+<circle cx="150" cy="150" r="60" fill="#FFFFFF"/>
+<circle cx="214" cy="248" r="14" fill="#FFC83D"/>
+</g>
+</svg>
