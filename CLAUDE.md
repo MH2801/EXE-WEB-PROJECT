@@ -60,7 +60,8 @@ Plan and build:
 - Process: `superpowers:writing-plans`, `subagent-driven-development`, `test-driven-development` (for `core/`), `systematic-debugging`, `verification-before-completion`.
 - Game: `game-design` (state and numbers), `experience-design` (pacing), `game-feel` (Mimi reactions), `narrative-design` (lines), `audio-design`, `player-ux`, `motivation-design` (reward and dark-pattern guardrails), `accessibility-design`, `playtest-design`.
 - UI: `ui-ux-pro-max` and `frontend-design` for Memory, Parent area and the book. They lose to the storyboard's art style.
-Load a skill only for the task that needs it. Check whether the installed `phaser` package ships agent docs before searching the web.
+- Phaser API: `node_modules/phaser/skills/<topic>/SKILL.md` (scenes, tweens, input-keyboard-mouse-touch, scale-and-responsive, loading-assets, audio-and-sound, sprites-and-images, text-and-bitmaptext, graphics-and-shapes, time-and-timers, game-setup-and-config, v4-new-features). Read only the topic a task cites. Never read `node_modules/` elsewhere. Do not search the web for Phaser API.
+Load a skill only for the task that needs it.
 
 ## Ponytail
 Level `full` for this project. The spec, plan and ADRs are "what was asked": Ponytail never drops a plan task, a test, a kid-safety rule or an accessibility rule. Use it to keep each task the smallest complete change: no wrappers, options or abstractions beyond the spec's interfaces. Its closing line (skipped or unchecked) goes in task reports. Run `/ponytail-review` on each batch diff.

@@ -270,7 +270,7 @@ public/audio/        tùy chọn, tên file theo ID lời thoại
 
 **Lưu.** `localStorage`, khóa `dtd.save.v1`, JSON gồm `Knowledge` (trừ `belief`), `missionDone`, các chỉ số §11 và `viSubtitles`. Lưu sau mỗi thay đổi kiến thức. Đọc hỏng hoặc bộ nhớ bị chặn: chạy trong RAM, không báo lỗi với bé.
 
-**Mở lại giữa chừng.** `apple = learned` và `missionDone` → `replay` ở lần bấm Start Game. Chưa xong → vào `arrive`, giữ `notApple`, bỏ `belief`.
+**Mở lại giữa chừng.** `apple = learned` → `replay` ở lần bấm Start Game. Chưa học → vào `arrive` nếu đã có `notApple`, nếu không vào `intro`. `belief` không được lưu.
 
 **Phụ đề tiếng Việt.** Tắt mặc định, bật ở Khu phụ huynh. Chỉ thêm một dòng chữ dưới khung thoại; game không đổi gì khác.
 
@@ -347,13 +347,12 @@ Theo Numbers Policy của skill `game-design`. A: có nguồn. B: giá trị kh�
 |---|---|---|
 | Nền chợ mẹ, nền khu trái cây, nền tiêu đề, nền Memory | Lớp trong PDF, 1672×941 | Có |
 | Mimi các tư thế, mẹ, NPC hologram | Lớp nền trong suốt trong PDF | Có. NPC thứ hai dùng cùng hình, đổi màu |
-| Quả lemon | Lớp trong PDF | Có |
-| Quả apple, banana, grape, orange | Cắt từ biển hiệu sạp, hoặc lớp còn lại trong PDF | Cần kiểm tra bằng ảnh ghép khi tách |
+| 5 quả, 5 sạp, nền chợ trống, cây và cờ phía trước | Lớp riêng ở trang 15 của PDF | Có. Hình quả nhỏ (60–161 px), kiểm độ nét khi phóng lên |
 | Sổ nhiệm vụ, icon đỏ, icon tròn, nút Yes/No, khung thoại | Tự vẽ bằng Phaser | Làm trong code |
 | Nền đã xóa chữ lỗi | Che và viết lại trong Phaser, hoặc thay bằng PDF mới | Nếu có PDF đã sửa thì tách lại |
 | Hình nhánh dạy đúng | Ngọc Minh gửi sau | Không chặn: dùng cảnh đã có nếu chưa nhận |
 
-Mọi hình vào app phải có dòng trong [CREDITS](../../assets/CREDITS.md) trước. Hình chuyển sang WebP. Quả nằm liền trong nền, nên vùng bấm là cả sạp, không phải từng quả.
+Mọi hình vào app phải có dòng trong [CREDITS](../../assets/CREDITS.md) trước. Hình chuyển sang WebP. Sạp và quả là lớp riêng nên sạp bị loại làm mờ được mà không sửa nền. Vùng bấm là cả sạp.
 
 ## 16. Giả định
 
