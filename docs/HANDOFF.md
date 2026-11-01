@@ -1,9 +1,14 @@
 # Handoff
 
 ## 0. Đang làm: Chuyến đi của Mimi
-Nhánh `feat/chuyen-di`, theo [plan](superpowers/plans/2026-11-02-chuyen-di-cua-mimi.md). Task 1–8 xong: lõi logic, hình, HUD, Nhà Mimi, Sổ từ, khu phụ huynh. Nút Go ở Nhà chưa chạy vì scene chuyến đi chưa có. Founder đã duyệt hình Task 6. Việc tiếp theo: Task 9, rồi Task 10 và điểm dừng chơi thử bản thô.
-- Báo cáo review: `build/review-batch-a.md`, `build/ponytail-batch-a.md`.
-- Quyết định và việc chuyển cho task sau: `.superpowers/sdd/2026-11-02-chuyen-di-cua-mimi/progress.md`.
+Branch `feat/chuyen-di`, following the [plan](superpowers/plans/2026-11-02-chuyen-di-cua-mimi.md). Tasks 1–10 are done: a full trip is playable in the raw build (map, six room types, cards, battery, gears, return screen). Feel is not polished yet. **Now stopped at the founder playtest checkpoint after Task 10.** Next: founder feedback, then Task 11.
+- To play: `npm run dev`, press Go. Add `?seed=7` to the URL to repeat a trip.
+- Pattern A is a new save. For B or C, paste this in the DevTools console; `n` = 3 gives B, `n` = 5 gives C. `localStorage.removeItem('dtd.save.v2')` goes back to A.
+  ```js
+  n=3;localStorage.setItem('dtd.save.v2',JSON.stringify({brain:Object.fromEntries(['apple','banana','orange','lemon','grape','red','yellow','green'].map((w,i)=>[w,{state:i<n?'remembered':'unknown',notThis:[],learnedFrom:null,lastTrip:0}])),gears:0,trips:1,helped:0,viSubtitles:false}));location.reload()
+  ```
+- Review reports: `build/review-batch-a.md`, `build/ponytail-batch-a.md`, `build/review-batch-b.md`, `build/ponytail-batch-b.md`. Screenshots: `build/montage-b-rooms.png`, `build/montage-b-fixes.png`, `build/shots/b-*.png`.
+- Decisions and items carried to Tasks 11 and 12: `.superpowers/sdd/2026-11-02-chuyen-di-cua-mimi/progress.md`.
 
 ## 1. Hiện trạng
 Nhánh `feat/mvp`: Batch A, B, C, D xong, mỗi task một commit, chưa push. `tsc`, 88 test đơn vị và `build` đều qua. 14 test trình duyệt (e2e) có trong `tests/e2e/`. Chưa có repo GitHub và tài khoản Cloudflare.
