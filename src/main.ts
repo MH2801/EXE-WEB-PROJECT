@@ -1,11 +1,7 @@
 import Phaser from 'phaser';
 import { TUNING } from './content/tuning';
-
-class EmptyScene extends Phaser.Scene {
-  constructor() {
-    super('Empty');
-  }
-}
+import { Boot } from './scenes/Boot';
+import { Title } from './scenes/Title';
 
 const game = new Phaser.Game({
   type: Phaser.AUTO,
@@ -16,7 +12,9 @@ const game = new Phaser.Game({
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
-  scene: [EmptyScene],
+  scene: [Boot, Title],
 });
+
+if (import.meta.env.DEV) (window as unknown as { __game: Phaser.Game }).__game = game;
 
 export default game;
