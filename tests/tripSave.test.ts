@@ -20,6 +20,11 @@ describe('tripSave', () => {
     writeTripSave(s, save);
     expect(loadTripSave(s)).toEqual(save);
   });
+  it('a save where Mimi knows no word falls back to default (apple unknown or believed)', () => {
+    for (const state of ['unknown', 'believed']) {
+      expect(loadRaw(mutate((o) => { o.brain.apple.state = state; o.gears = 9; }))).toEqual(defaultTripSave());
+    }
+  });
   it('bad data falls back to default', () => {
     const d = defaultTripSave();
     expect(loadRaw('{nope')).toEqual(d);

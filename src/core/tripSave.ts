@@ -1,5 +1,5 @@
 import { WORDS } from '../content/words';
-import { dropBeliefs, freshBrain, type Brain, type WordRecord, type WordState } from './knowledge';
+import { dropBeliefs, freshBrain, knownWords, type Brain, type WordRecord, type WordState } from './knowledge';
 import type { Store } from './save';
 import { FRUITS, type FruitId } from './types';
 
@@ -31,7 +31,9 @@ function parse(raw: unknown): TripSave | null {
     brain[d.id] = r;
   }
   // A belief only lives for one trip, so it never survives a reload.
-  return { brain: dropBeliefs(brain), gears: raw.gears, trips: raw.trips, helped: raw.helped, viSubtitles: raw.viSubtitles };
+  const kept = dropBeliefs(brain);
+  if (knownWords(kept).length === 0) return null; // generateTrip needs at least one known word (apple)
+  return { brain: kept, gears: raw.gears, trips: raw.trips, helped: raw.helped, viSubtitles: raw.viSubtitles };
 }
 
 export function loadTripSave(store: Store | null): TripSave {
