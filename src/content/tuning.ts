@@ -123,6 +123,16 @@ export const TUNING = {
     bigChestGears: [3, 4], // B
     patternB: 3, // B
     patternC: 5, // B
+    // Layout and feel of the trip HUD, bubble and cards (Task 7). All B, tune by eye; 1672x941 frame.
+    layout: {
+      order: { x: 40, y: 36, slot: 104, gap: 14, font: 22, mark: 30 }, // top left, slots run rightwards
+      battery: { right: 1632, y: 36, barW: 40, barH: 70, gap: 12, fallPx: 160, fallMs: 500 }, // top right
+      gears: { right: 1632, y: 150, font: 48, icon: 22, bounce: 1.25, bounceMs: 140 }, // under the battery
+      cards: { y: 810, w: 220, h: 250, gap: 40, thick: 12, pic: 110, swatch: 120, font: 40, enterDy: 300, enterMs: 320, staggerMs: 80, upPx: 70, upMs: 140, fadeMs: 200 }, // bottom row
+      bubble: { dx: 190, dy: -440, w: 200, h: 170, pic: 100, font: 90, popMs: 160 }, // from Mimi's feet
+      swatch: { red: 0xe5484d, yellow: 0xffc83d, green: 0x3fae4a }, // colour cards and order slots
+      depth: 40, // HUD and cards draw above the room
+    },
   },
   markTag: { scale: 0.2, dy: 50, angle: 14, ms: 140, repeat: 3 }, // B, Mimi head on a rejected stall
 } as const;

@@ -3,6 +3,7 @@ import { createSpeaker } from './speech';
 import { RECORDED } from '../content/audio-manifest';
 import { TUNING } from '../content/tuning';
 import { playSfx } from './sfx';
+import { COLORS, CSS, FONT_DISPLAY } from './theme';
 
 export const reducedMotion = (): boolean =>
   typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -67,6 +68,45 @@ export function makeButton(
   return c;
 }
 
+/** Scale an image so its longer side is `px`. */
+export const fitImage = (img: Phaser.GameObjects.Image, px: number): Phaser.GameObjects.Image => img.setScale(px / Math.max(img.width, img.height));
+
+/** Thick clay button: a dark base under a raised face. Acts on press; the face sinks into the base. */
+export function makeClayButton(
+  scene: Phaser.Scene,
+  x: number,
+  y: number,
+  opts: { label?: string; icon?: string; w: number; h: number; variant: 'primary' | 'plain'; ariaName: string; onTap: () => void },
+): Phaser.GameObjects.Container {
+  const w = Math.max(opts.w, TUNING.minHitPx);
+  const h = Math.max(opts.h, TUNING.minHitPx);
+  const lip = Math.round(h * 0.1); // visible thickness of the base
+  const fh = h - lip;
+  const base = scene.add.graphics().fillStyle(COLORS.indigo, 1).fillRoundedRect(-w / 2, -h / 2 + lip, w, fh, 32);
+  const face = scene.add.container(0, 0, [
+    scene.add.graphics().fillStyle(opts.variant === 'primary' ? COLORS.sun : COLORS.paper, 1).fillRoundedRect(-w / 2, -h / 2, w, fh, 32).lineStyle(6, COLORS.indigo, 1).strokeRoundedRect(-w / 2, -h / 2, w, fh, 32),
+  ]);
+  const midY = -lip / 2;
+  if (opts.icon) face.add(fitImage(scene.add.image(opts.label ? -w * 0.22 : 0, midY, opts.icon), fh * 0.6));
+  if (opts.label) face.add(scene.add.text(opts.icon ? w * 0.08 : 0, midY, opts.label, { fontFamily: FONT_DISPLAY, fontStyle: '800', fontSize: `${Math.round(h * 0.4)}px`, color: CSS.ink }).setOrigin(0.5));
+  const c = scene.add.container(x, y, [base, face]).setSize(w, h).setInteractive({ useHandCursor: true }).setName(opts.ariaName);
+  let last = -Infinity;
+  const release = () => {
+    face.y = 0;
+    c.setScale(1);
+  };
+  c.on('pointerdown', () => {
+    face.y = lip; // the sink stays under reduced motion
+    if (!reducedMotion()) c.setScale(TUNING.pressScale);
+    const now = scene.time.now;
+    if (now - last < TUNING.tapDebounceMs) return;
+    last = now;
+    playSfx('pop');
+    opts.onTap();
+  });
+  c.on('pointerup', release).on('pointerout', release);
+  return c;
+}
 
 // Portrait: a drawn phone turning sideways, no text. Hidden when landscape.
 export function addRotateOverlay(scene: Phaser.Scene): void {

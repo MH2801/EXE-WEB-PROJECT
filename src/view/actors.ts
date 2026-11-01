@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import type { Pose } from '../core/mission';
+import type { TripPose } from '../core/trip';
 import { TUNING } from '../content/tuning';
 import { reducedMotion } from './ui';
 
@@ -9,13 +10,13 @@ export class Mimi {
   held: Phaser.GameObjects.Image | null = null;
   private bob: Phaser.Tweens.Tween | null = null;
 
-  constructor(private scene: Phaser.Scene, x: number, y: number) {
-    this.body = scene.add.image(0, 0, 'mimi_idle').setOrigin(0.5, 1); // feet at the container origin
+  constructor(private scene: Phaser.Scene, x: number, y: number, private prefix = 'mimi') {
+    this.body = scene.add.image(0, 0, `${prefix}_idle`).setOrigin(0.5, 1); // feet at the container origin
     this.go = scene.add.container(x, y, [this.body]);
   }
 
-  pose(p: Pose): void {
-    this.body.setTexture(`mimi_${p}`);
+  pose(p: Pose | TripPose): void {
+    this.body.setTexture(`${this.prefix}_${p}`);
   }
 
   walkTo(x: number, y: number, speed: number): Promise<void> {
