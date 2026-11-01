@@ -39,6 +39,7 @@ export class RoomView {
   private cashier: Phaser.GameObjects.Image | null = null;
   private stalls = new Map<FruitId, Stall>();
   private stallsOn = false;
+  private picked: FruitId | null = null; // the stall Mimi is asking about stays lit, right or wrong
   private asks: Box[] = [];
   private book: { word: WordId; root: Box } | null = null;
 
@@ -81,6 +82,7 @@ export class RoomView {
     this.cashier = null;
     this.stalls.clear();
     this.stallsOn = false;
+    this.picked = null;
     this.asks = [];
     this.book = null;
     this.spots.clear();
@@ -93,6 +95,7 @@ export class RoomView {
   /** Stalls are tappable while on; a marked one never is. */
   setStalls(on: boolean): void {
     this.stallsOn = on;
+    if (on) this.picked = null;
     this.stalls.forEach((s) => this.paintStall(s));
   }
 
@@ -258,7 +261,10 @@ export class RoomView {
         ]).setDepth(10),
       );
       // The tap area covers the counter and the fruit; its centre is where the e2e hook clicks.
-      const zone = this.tappable(x, k.y - k.itemPx / 2, k.w, k.itemPx + k.h, `stall_${f}`, box, () => this.onEvent({ t: 'tapStall', fruit: f }));
+      const zone = this.tappable(x, k.y - k.itemPx / 2, k.w, k.itemPx + k.h, `stall_${f}`, box, () => {
+        this.picked = f;
+        this.onEvent({ t: 'tapStall', fruit: f });
+      });
       const stall = { box, zone, marked: false, x, y: iy };
       this.stalls.set(f, stall);
       this.paintStall(stall);
@@ -277,7 +283,7 @@ export class RoomView {
 
   private paintStall(s: Stall): void {
     s.zone.input!.enabled = this.stallsOn && !s.marked;
-    s.box.setAlpha(this.stallsOn ? (s.marked ? TUNING.stallDimMarked : 1) : s.marked ? TUNING.stallDimMarkedOff : TUNING.stallDimOff);
+    s.box.setAlpha(this.stallsOn ? (s.marked ? TUNING.stallDimMarked : 1) : s.marked ? TUNING.stallDimMarkedOff : this.picked && this.stalls.get(this.picked) === s ? 1 : TUNING.stallDimOff);
   }
 
   /** Colour clues are swatches, "long" and "round" are drawn shapes, a colour word's clue is its fruit. Never the answer for a fruit word. */

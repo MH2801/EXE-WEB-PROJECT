@@ -29,7 +29,7 @@ export class Hud {
     }
     const icon = scene.add.graphics().fillStyle(COLORS.sun, 1).lineStyle(5, COLORS.indigo, 1);
     icon.fillPoints(pts, true).strokePoints(pts, true).fillStyle(COLORS.paper, 1).fillCircle(0, 0, g.icon * 0.35);
-    this.gearText = text(scene, -g.icon - 10, 0, '0', g.font).setOrigin(1, 0.5);
+    this.gearText = text(scene, -g.icon - 10, 0, '0', g.font).setOrigin(1, 0.5).setColor(CSS.paper); // the trip background is Indigo
     this.gearBox = scene.add.container(g.right - g.icon, g.y, [icon, this.gearText]);
     this.root = scene.add.container(0, 0, [this.order, this.battery, this.gearBox]).setDepth(L.depth);
   }
@@ -68,7 +68,7 @@ export class Hud {
       this.scene.time.delayedCall(b.fallMs + TUNING.fallbackPadMs, () => lost.destroy());
     }
     this.left = left;
-    this.battery.clear().lineStyle(5, COLORS.indigo, 1);
+    this.battery.clear().lineStyle(5, COLORS.skyLight, 1); // on Indigo, so an empty bar still counts
     for (let i = 0; i < max; i++) {
       const x = x0 + i * (b.barW + b.gap);
       this.battery.fillStyle(COLORS.sun, i < left ? 1 : 0).fillRoundedRect(x, b.y, b.barW, b.barH, 8).strokeRoundedRect(x, b.y, b.barW, b.barH, 8);
