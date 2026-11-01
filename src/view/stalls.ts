@@ -62,9 +62,10 @@ export class Stalls {
     if (this.marked.has(f)) return;
     this.marked.add(f);
     const s = L(`stall_${f}`);
-    const tag = this.scene.add.image(s.x, s.y - s.h / 2 + 50, 'mimi_puzzled').setScale(0.2).setDepth(13).setVisible(this.shown);
+    const t = TUNING.markTag;
+    const tag = this.scene.add.image(s.x, s.y - s.h / 2 + t.dy, 'mimi_puzzled').setScale(t.scale).setDepth(13).setVisible(this.shown);
     this.all.push(tag);
-    if (!reducedMotion()) this.scene.tweens.add({ targets: tag, angle: 14, duration: 140, yoyo: true, repeat: 3 });
+    if (!reducedMotion()) this.scene.tweens.add({ targets: tag, angle: t.angle, duration: t.ms, yoyo: true, repeat: t.repeat });
     this.refresh();
   }
 

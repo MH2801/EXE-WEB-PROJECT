@@ -48,11 +48,19 @@ export const TUNING = {
   npcY: 582, // B
   npcMs: 600, // B, walk in / out
   fallbackPadMs: 300, // B, timer fallback after an awaited tween
-  jokeMs: 700, // B, placeholder joke (the real jokes come in a later task)
+  jokeMs: 350, // B, reduced-motion hold for the placeholder joke (the real jokes come in a later task)
   celebrateMs: 900, // B, placeholder celebration
   momNodMs: 400, // B
   recall: { y: 470, gap: 386, scale: 2.6, card: 300 }, // B, three big fruits (spec 7)
   book: { x: 110, y: 130, size: 140, panelX: 836, panelY: 400, panelW: 960, panelH: 520, cell: 240, closeSize: 130 }, // B
   pulseMs: 700, // B, book icon pulse
   pulseScale: 1.12, // B
+  headDy: 200, // B, height above Mimi's feet for a fruit she shows and for the star burst
+  npcOffX: -300, // B, where the customer waits off screen
+  npcWant: { x: 90, y: -80, scale: 1.4 }, // B, the fruit icon the customer holds
+  npcTint: [0xffffff, 0xffffff, 0xffc27a, 0x9fd8ff], // B, by visit: a returning customer has another colour (spec 5.2)
+  momNodPx: 14, // B
+  joke: { angle: 10, stepMs: 90, repeat: 3 }, // B, placeholder wobble
+  celebrate: { stars: 10, inner: 7, outer: 18, rx: 260, ry: 200, hopPx: 50, hopMs: 180, hopRepeat: 1, holdMs: 450 }, // B, placeholder burst
+  markTag: { scale: 0.2, dy: 50, angle: 14, ms: 140, repeat: 3 }, // B, Mimi head on a rejected stall
 } as const;

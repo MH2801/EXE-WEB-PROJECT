@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import layout from '../content/layout.json';
 import { RECALL_FRUITS } from '../content/fruits';
-import { LINES } from '../content/lines';
+import { LABELS, LINES } from '../content/lines';
 import { TUNING } from '../content/tuning';
 import { start, step, toSave, type Effect, type MissionEvent, type MissionState, type Phase, type Spot } from '../core/mission';
 import { browserStore, loadSave, writeSave } from '../core/save';
@@ -21,7 +21,6 @@ const AUTO: ReadonlySet<Phase> = new Set<Phase>([
   'intro', 'arrive', 'believed', 'said_no', 'to_mom', 'mom_no', 'mom_thanks',
   'npc_eliminate', 'npc_apple', 'tricked', 'memory_reveal', 'replay',
 ]);
-const NPC_TINT = [0xffffff, 0xffffff, 0xffc27a, 0x9fd8ff]; // by visit: a different colour for a returning customer (spec 5.2)
 
 export class Mission extends Phaser.Scene {
   private state!: MissionState;
@@ -79,8 +78,8 @@ export class Mission extends Phaser.Scene {
     this.dialogue = new Dialogue(this);
     this.book = new MissionBook(this, (e) => this.dispatch(e), (open) => (open ? this.stopIdle() : this.startIdle()));
     this.choices = [
-      this.makeChoice(TUNING.yes, 'Yes', 'yes'),
-      this.makeChoice(TUNING.no, 'No', 'no'),
+      this.makeChoice(TUNING.yes, LABELS.yes, 'yes'),
+      this.makeChoice(TUNING.no, LABELS.no, 'no'),
     ];
     this.setBg(null);
     addRotateOverlay(this);
@@ -219,8 +218,9 @@ export class Mission extends Phaser.Scene {
     this.stalls.show(bg === 'fruit');
     this.book.setState(bg === 'fruit' ? this.bookWanted : 'hidden');
     if (bg && changed) {
-      // First scene: Mimi is already there. Later: she walks in from the side she left by.
-      const pos = first
+      // First scene, or `arrive` (no walk follows it): Mimi is already there. Else she walks in from the side she left by.
+      const there = first || (bg === 'fruit' && this.state.phase === 'arrive');
+      const pos = there
         ? bg === 'market' ? TUNING.momSpot : TUNING.fruitSpot
         : { x: bg === 'market' ? TUNING.gameW + TUNING.offscreenPad : -TUNING.offscreenPad, y: TUNING.feetY };
       this.mimi.go.setPosition(pos.x, pos.y);
@@ -289,7 +289,7 @@ export class Mission extends Phaser.Scene {
       this.lifted = null;
       if (!e.fruit) return;
       const { x, y, scale, ms } = TUNING.lift;
-      const from = this.bg === 'fruit' ? this.stalls.center(e.fruit) : { x: this.mimi.go.x, y: this.mimi.go.y - 200 };
+      const from = this.bg === 'fruit' ? this.stalls.center(e.fruit) : { x: this.mimi.go.x, y: this.mimi.go.y - TUNING.headDy };
       const img = this.add.image(from.x, from.y, `fruit_${e.fruit}`).setDepth(60);
       this.lifted = img;
       if (reducedMotion()) img.setPosition(x, y).setScale(scale);
@@ -309,9 +309,11 @@ export class Mission extends Phaser.Scene {
     stalls: (e) => this.stalls.setEnabled(e.enabled),
     npc: async (e) => {
       this.npc?.destroy();
-      const body = this.add.image(0, 0, 'npc').setTint(NPC_TINT[e.visit % NPC_TINT.length] ?? 0xffffff);
-      const want = this.add.image(90, -80, `fruit_${e.fruit}`).setScale(1.4); // what this customer buys
-      const c = this.add.container(-300, TUNING.npcY, [body, want]).setDepth(60);
+      const tints = TUNING.npcTint;
+      const w = TUNING.npcWant;
+      const body = this.add.image(0, 0, 'npc').setTint(tints[e.visit % tints.length] ?? 0xffffff);
+      const want = this.add.image(w.x, w.y, `fruit_${e.fruit}`).setScale(w.scale); // what this customer buys
+      const c = this.add.container(TUNING.npcOffX, TUNING.npcY, [body, want]).setDepth(60);
       this.npc = c;
       await this.tw({ targets: c, x: TUNING.npcX, duration: TUNING.npcMs }, TUNING.npcMs);
       c.x = TUNING.npcX;
@@ -319,34 +321,37 @@ export class Mission extends Phaser.Scene {
     npcLeave: async () => {
       const c = this.npc;
       if (!c) return;
-      await this.tw({ targets: c, x: -300, duration: TUNING.npcMs }, TUNING.npcMs);
+      await this.tw({ targets: c, x: TUNING.npcOffX, duration: TUNING.npcMs }, TUNING.npcMs);
       c.destroy();
       if (this.npc === c) this.npc = null;
     },
     momLook: async () => {
-      await this.tw({ targets: this.mom, y: this.mom.y + 14, duration: TUNING.momNodMs / 2, yoyo: true }, TUNING.momNodMs);
+      await this.tw({ targets: this.mom, y: this.mom.y + TUNING.momNodPx, duration: TUNING.momNodMs / 2, yoyo: true }, TUNING.momNodMs);
     },
     // Placeholder joke: a wobble. The per-fruit scenes of spec 9 come with their own task.
     joke: async () => {
       this.mimi.pose('surprised');
-      await this.tw({ targets: this.mimi.go, angle: 10, duration: TUNING.jokeMs / 8, yoyo: true, repeat: 3 }, TUNING.jokeMs);
+      const j = TUNING.joke;
+      await this.tw({ targets: this.mimi.go, angle: j.angle, duration: j.stepMs, yoyo: true, repeat: j.repeat }, j.stepMs * 2 * (j.repeat + 1));
       this.mimi.go.setAngle(0);
-      if (reducedMotion()) await this.wait(TUNING.jokeMs / 2);
+      if (reducedMotion()) await this.wait(TUNING.jokeMs);
     },
     wait: (e) => this.wait(e.ms),
     // Placeholder celebration: two hops and a burst of stars.
     celebrate: async () => {
       const { x, y } = this.mimi.go;
+      const c = TUNING.celebrate;
+      const top = y - TUNING.headDy;
       if (!reducedMotion()) {
-        for (let i = 0; i < 10; i++) {
-          const star = this.add.star(x, y - 200, 5, 7, 18, 0xffd23f).setDepth(70);
-          const a = (i / 10) * Math.PI * 2;
-          this.tweens.add({ targets: star, x: x + Math.cos(a) * 260, y: y - 200 + Math.sin(a) * 200, alpha: 0, duration: TUNING.celebrateMs, onComplete: () => star.destroy() });
+        for (let i = 0; i < c.stars; i++) {
+          const star = this.add.star(x, top, 5, c.inner, c.outer, 0xffd23f).setDepth(70);
+          const a = (i / c.stars) * Math.PI * 2;
+          this.tweens.add({ targets: star, x: x + Math.cos(a) * c.rx, y: top + Math.sin(a) * c.ry, alpha: 0, duration: TUNING.celebrateMs, onComplete: () => star.destroy() });
           this.time.delayedCall(TUNING.celebrateMs + TUNING.fallbackPadMs, () => star.destroy());
         }
       }
-      await this.tw({ targets: this.mimi.go, y: y - 50, duration: 180, yoyo: true, repeat: 1 }, 720);
-      await this.wait(TUNING.celebrateMs / 2);
+      await this.tw({ targets: this.mimi.go, y: y - c.hopPx, duration: c.hopMs, yoyo: true, repeat: c.hopRepeat }, c.hopMs * 2 * (c.hopRepeat + 1));
+      await this.wait(c.holdMs);
     },
     recall: (e) => {
       for (const o of this.recallObjs) o.destroy();

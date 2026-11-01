@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { LABELS } from '../content/lines';
 import { TUNING } from '../content/tuning';
 import type { BookWord } from '../core/types';
 import type { MissionEvent } from '../core/mission';
@@ -48,7 +49,7 @@ export class MissionBook {
       this.panel.push(b);
     };
     const gap = cell + 60;
-    word(-gap, 'apple', (b) => b.add(scene.add.text(0, 0, 'APPLE', { fontFamily: 'sans-serif', fontStyle: 'bold', fontSize: '56px', color: '#16324f' }).setOrigin(0.5)));
+    word(-gap, 'apple', (b) => b.add(scene.add.text(0, 0, LABELS.apple, { fontFamily: 'sans-serif', fontStyle: 'bold', fontSize: '56px', color: '#16324f' }).setOrigin(0.5)));
     word(0, 'red', (b) => b.add(scene.add.rectangle(0, 0, cell * 0.6, cell * 0.6, 0xe53935)));
     word(gap, 'round', (b) => b.add(scene.add.circle(0, 0, cell * 0.3, 0xffb300)));
 

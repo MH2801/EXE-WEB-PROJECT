@@ -45,3 +45,6 @@ export const LINES = {
 } as const satisfies Record<string, Line>;
 
 export type LineId = keyof typeof LINES;
+
+/** Words printed on buttons and the book; the game is playable without reading them. */
+export const LABELS = { yes: 'Yes', no: 'No', apple: 'APPLE' } as const;
