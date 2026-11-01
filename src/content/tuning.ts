@@ -30,4 +30,29 @@ export const TUNING = {
     memory: { x: 1510, y: 640, w: 250, h: 130 },
     lock: { x: 90, y: 90, w: 120, h: 120 },
   }, // B, drawn over bg_title's painted buttons
+  // Mission view (Task 8). All B, tune by eye; positions are in the 1672x941 logic frame.
+  mimiScale: 0.72, // B, layout.json draws Mimi 381 px tall, the art is 527
+  feetY: 860, // B, where Mimi's feet stand (the dialogue box overlaps her feet a little)
+  momSpot: { x: 1000, y: 860 }, // B, right of mom (layout mom x 550, w 545)
+  fruitSpot: { x: 836, y: 860 }, // B
+  offscreenPad: 200, // B, Mimi enters from this far outside the frame
+  lift: { x: 836, y: 300, scale: 3, ms: 350 }, // B, the fruit Mimi looks at
+  yes: { x: 560, y: 620 }, // B, fixed (spec 9)
+  no: { x: 1112, y: 620 }, // B
+  choiceW: 320, // B
+  choiceH: 170, // B
+  stallDimOff: 0.55, // B, stall alpha while not tappable
+  stallDimMarked: 0.6, // B, stall alpha after a No (tappable, Mimi remembers)
+  stallDimMarkedOff: 0.35, // B
+  npcX: 233, // B, from layout.json
+  npcY: 582, // B
+  npcMs: 600, // B, walk in / out
+  fallbackPadMs: 300, // B, timer fallback after an awaited tween
+  jokeMs: 700, // B, placeholder joke (the real jokes come in a later task)
+  celebrateMs: 900, // B, placeholder celebration
+  momNodMs: 400, // B
+  recall: { y: 470, gap: 386, scale: 2.6, card: 300 }, // B, three big fruits (spec 7)
+  book: { x: 110, y: 130, size: 140, panelX: 836, panelY: 400, panelW: 960, panelH: 520, cell: 240, closeSize: 130 }, // B
+  pulseMs: 700, // B, book icon pulse
+  pulseScale: 1.12, // B
 } as const;

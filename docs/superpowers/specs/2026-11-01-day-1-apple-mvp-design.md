@@ -342,6 +342,7 @@ Theo Numbers Policy của skill `game-design`. A: có nguồn. B: giá trị kh�
 | Tốc độ đi của Mimi | 1 lần, từ lần mang quả thứ hai là 2 lần (§5.1) | B | Cảnh lặp không nặng nề | Chỉnh |
 | Thời hạn tối đa một câu | 1,5 giây + 90 ms mỗi ký tự | B | Không câu nào bị cắt | Tăng |
 | Một lượt đi đúng | khoảng 3 phút | B | Bé không rời mắt | Rút cảnh |
+| Số của scene nhiệm vụ: vị trí Yes/No, cỡ Mimi, quả bay lên, độ mờ sạp, sổ, cảnh gặp lại | xem khối "Mission view" trong `tuning.ts` | B, chỉnh bằng mắt | Founder chơi thử: nhìn rõ, bấm trúng | Chỉnh số trong `tuning.ts` |
 | Tổng dung lượng tải | ≤ 12 MB | B | `dist/` sau build | Nén hình mạnh hơn |
 
 ## 15. Hình và tài sản
