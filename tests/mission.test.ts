@@ -32,6 +32,16 @@ describe('mission: Yes branch', () => {
     expect(r.state.knowledge.apple).toBe('unknown');
   });
 
+  it('mom_no is surprise first, then the laugh', () => {
+    const e = play(newSave(), [stall('lemon'), YES]).per[2]!;
+    const idx = (f: (x: Effect) => boolean) => e.findIndex(f);
+    const surprised = idx((x) => x.t === 'pose' && x.pose === 'surprised');
+    const joke = idx((x) => x.t === 'joke');
+    expect(surprised).toBeGreaterThanOrEqual(0);
+    expect(surprised).toBeLessThan(joke);
+    expect(e.slice(joke).some((x) => x.t === 'pose' && x.pose === 'happy')).toBe(true);
+  });
+
   it('a wrong trip emits save', () => {
     const r = play(newSave(), [stall('lemon'), YES]);
     expect(has(r.per[2]!, 'save')).toBe(true);
@@ -40,7 +50,8 @@ describe('mission: Yes branch', () => {
   it('second trip walks at repeatTripSpeed, first does not', () => {
     const r = play(newSave(), [stall('lemon'), YES, stall('banana'), YES]);
     const speeds = (e: Effect[]) => e.flatMap((x) => (x.t === 'walk' ? [x.speed] : []));
-    expect(speeds(r.per[2]!).every((v) => v !== TUNING.repeatTripSpeed)).toBe(true);
+    expect(speeds(r.per[2]!).length).toBeGreaterThan(0);
+    expect(speeds(r.per[2]!).every((v) => v === TUNING.walkSpeed)).toBe(true);
     expect(speeds(r.per[4]!)).toContain(TUNING.repeatTripSpeed);
   });
 });
@@ -91,12 +102,12 @@ describe('mission: Mimi does not know the answer', () => {
 });
 
 describe('mission: No branch', () => {
-  it('no on wrong fruit marks it', () => {
-    const r = play(newSave(), [stall('lemon'), NO]);
+  it.each(WRONG)('no on %s marks it', (f) => {
+    const r = play(newSave(), [stall(f), NO]);
     expect(says(r.per[2]!)).toContain('mimi.not_this');
-    expect(r.per[2]!).toContainEqual({ t: 'mark', fruit: 'lemon' });
+    expect(r.per[2]!).toContainEqual({ t: 'mark', fruit: f });
     expect(r.state.misses).toBe(1);
-    expect(r.state.knowledge.notApple).toEqual(['lemon']);
+    expect(r.state.knowledge.notApple).toEqual([f]);
     expect(r.state.phase).toBe('choosing');
   });
 
@@ -121,6 +132,7 @@ describe('mission: No branch', () => {
     const r = play(newSave(), [stall('apple'), NO, NO]);
     expect(r.per[3]!.find((e) => e.t === 'npc')).toEqual({ t: 'npc', fruit: 'apple', visit: 2 });
     expect(says(r.per[3]!).at(-1)).toBe('mimi.really');
+    expect(r.per[3]!).toContainEqual({ t: 'pose', pose: 'think' });
     expect(r.state.phase).toBe('asking');
   });
 
@@ -129,6 +141,11 @@ describe('mission: No branch', () => {
     expect(says(r.per[4]!)).toContain('mimi.trick');
     expect(says(r.per[4]!)).toContain('mom.yes_apple');
     expect(says(r.per[4]!)).not.toContain('mom.again');
+    const after = r.per[4]!;
+    const happy = after.findIndex((e) => e.t === 'pose' && e.pose === 'happy');
+    const trick = after.findIndex((e) => e.t === 'say' && e.line === 'mimi.trick');
+    expect(happy).toBeGreaterThanOrEqual(0);
+    expect(happy).toBeLessThan(trick); // laughs in a happy pose, never in the doubt pose
     expect(r.state.knowledge.learnedFrom).toBe('mom');
     expect(r.state.knowledge.apple).toBe('learned');
     expect(r.state.stats.maxSupport).toBe(3);
@@ -152,14 +169,28 @@ describe('mission: support ladder', () => {
     expect(r.per[4]!).toContainEqual({ t: 'npc', fruit: 'grape', visit: 0 });
   });
 
-  it('three misses bring level 2', () => {
-    const r = play(newSave(), [stall('lemon'), NO, stall('banana'), NO, stall('grape'), NO]);
-    expect(r.per[6]!).toContainEqual({ t: 'npc', fruit: 'apple', visit: 1 });
-    expect(says(r.per[6]!)).toContain('npc.apple');
+  it('three misses bring level 2 while a wrong fruit is still left', () => {
+    const base = settle(start(newSave())).state;
+    const s: MissionState = {
+      ...base, phase: 'mom_no', misses: 3, support: 0,
+      knowledge: { ...base.knowledge, notApple: ['lemon'] },
+    };
+    const r = settle(step(s, DONE));
+    expect(r.effects).toContainEqual({ t: 'npc', fruit: 'apple', visit: 1 });
+    expect(says(r.effects)).toContain('npc.apple');
     expect(r.state.phase).toBe('asking');
     expect(r.state.pick).toBe('apple');
     expect(r.state.support).toBe(2);
     expect(r.state.stats.maxSupport).toBe(2);
+  });
+
+  it('three misses with every wrong fruit rejected give no hint (spec 6)', () => {
+    const r = play(newSave(), [stall('lemon'), NO, stall('banana'), NO, stall('grape'), NO]);
+    expect(r.state.knowledge.notApple).toHaveLength(4);
+    expect(r.state.phase).toBe('choosing');
+    expect(r.state.stats.maxSupport).toBe(1);
+    expect(r.per[6]!.some((e) => e.t === 'npc')).toBe(false);
+    expect(step(r.state, stall('apple')).state.phase).toBe('asking');
   });
 
   it('idle climbs the ladder then stops', () => {
@@ -176,10 +207,11 @@ describe('mission: support ladder', () => {
     expect(r.state).toBe(stopped);
   });
 
-  it('idle with every wrong fruit rejected goes straight to the apple NPC', () => {
-    const r = play(newSave({ notApple: [...WRONG] }), [{ t: 'idle' }]);
-    expect(r.per[1]!.some((e) => e.t === 'npc' && e.fruit === 'apple')).toBe(true);
-    expect(r.state.phase).toBe('asking');
+  it.each([0, 1] as const)('idle with every wrong fruit rejected gives no hint (support %i)', (support) => {
+    const s = settle(start(newSave({ notApple: [...WRONG] }))).state;
+    const r = step({ ...s, support }, { t: 'idle' });
+    expect(r.effects).toEqual([]);
+    expect(r.state.phase).toBe('choosing');
   });
 });
 
@@ -199,6 +231,10 @@ describe('mission: recall', () => {
     expect(r.state.phase).toBe('memory_reveal');
     expect(r.state.stats.recallFirstTry).toBe(false);
     expect(says(r.effects)).toEqual(['mimi.i_know']);
+    const lift = r.effects.findIndex((e) => e.t === 'lift' && e.fruit === 'apple');
+    const line = r.effects.findIndex((e) => e.t === 'say');
+    expect(lift).toBeGreaterThanOrEqual(0);
+    expect(lift).toBeLessThan(line); // Mimi shows which one is the apple before she says it
     expect(has(r.effects, 'goMemory')).toBe(true);
     expect(settle(r).state.phase).toBe('done');
   });
@@ -223,11 +259,9 @@ describe('mission: input guards', () => {
   });
 
   it('taps during cutscenes do nothing', () => {
-    const at = play(newSave(), [stall('lemon'), YES]);
     const toMom = step(step(settle(start(newSave())).state, stall('lemon')).state, YES);
     const s = step(toMom.state, DONE).state;
     expect(s.phase).toBe('to_mom');
-    expect(at.state.phase).toBe('choosing');
     for (const e of [stall('apple'), YES, { t: 'recallPick', fruit: 'apple' } as MissionEvent]) {
       const r = step(s, e);
       expect(r.effects).toEqual([]);
@@ -313,7 +347,8 @@ describe('mission: start and save', () => {
 });
 
 describe('mission: never stuck', () => {
-  it('random play always finishes', () => {
+  it('random play always finishes with the right controls on', () => {
+    const seen = { idleEliminate: 0, idleApple: 0, tricked: 0, replay: 0, allRejected: 0 };
     for (let seed = 1; seed <= 1000; seed++) {
       const rand = rng(seed);
       const pick = <T,>(xs: T[]): T => xs[Math.floor(rand() * xs.length)]!;
@@ -322,24 +357,54 @@ describe('mission: never stuck', () => {
         apple: known ? 'learned' : 'unknown',
         notApple: known ? [] : WRONG.filter(() => rand() < 0.3),
       });
-      let { state } = start(save);
+      // what the child can currently see, rebuilt only from the effects the core sent
+      const ui = { stalls: false, yesNo: false, recall: false };
+      const fold = (effects: Effect[]) => {
+        for (const e of effects) {
+          if (e.t === 'stalls') ui.stalls = e.enabled;
+          else if (e.t === 'yesNo') ui.yesNo = e.show;
+          else if (e.t === 'recall') ui.recall = e.show;
+        }
+      };
+      const first = start(save);
+      fold(first.effects);
+      let state = first.state;
+      if (state.phase === 'replay') seen.replay++;
       let steps = 0;
       while (state.phase !== 'done') {
         if (++steps > 500) throw new Error(`seed ${seed} stuck in ${state.phase}`);
+        const where = `seed ${seed} ${state.phase}`;
+        if (state.phase === 'choosing') {
+          expect(ui.stalls, `${where}: stalls must be on`).toBe(true);
+          if (state.knowledge.notApple.length === WRONG.length) seen.allRejected++;
+        }
+        if (state.phase === 'asking') {
+          expect(ui.yesNo, `${where}: Yes/No must be on`).toBe(true);
+          expect(ui.stalls, `${where}: stalls must be off`).toBe(false);
+        }
+        if (state.phase === 'recall') expect(ui.recall, `${where}: recall must be on`).toBe(true);
+
         const valid = validEvents(state);
         // an invalid event must be a perfect no-op
         const invalid = allEvents().filter((e) => !valid.some((v) => JSON.stringify(v) === JSON.stringify(e)));
         const probe = pick(invalid);
-        const noop = step(state, probe);
-        expect(noop.effects, `seed ${seed} ${state.phase} ${probe.t}`).toEqual([]);
-        expect(noop.state).toBe(state);
-        // the child always has something to do or the runner has something to send
-        expect(valid.length > 0, `seed ${seed} dead end in ${state.phase}`).toBe(true);
-        state = step(state, pick(valid)).state;
+        const ignored = step(state, probe);
+        expect(ignored.effects, `${where} ${probe.t}`).toEqual([]);
+        expect(ignored.state).toBe(state);
+
+        const ev = pick(valid);
+        const r = step(state, ev);
+        fold(r.effects);
+        if (ev.t === 'idle' && r.state.phase === 'npc_eliminate') seen.idleEliminate++;
+        if (ev.t === 'idle' && r.state.phase === 'npc_apple') seen.idleApple++;
+        if (r.state.phase === 'tricked') seen.tricked++;
+        state = r.state;
       }
       expect(state.missionDone).toBe(true);
       expect(state.knowledge.apple).toBe('learned');
     }
+    // the run must have actually walked every path it claims to cover
+    for (const [name, n] of Object.entries(seen)) expect(n, name).toBeGreaterThan(0);
   });
 
   it('choosing always lets the child tap a non-rejected stall', () => {

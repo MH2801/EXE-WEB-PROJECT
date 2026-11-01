@@ -12,6 +12,7 @@ export const TUNING = {
   speechPerCharMs: 90, // B
   minHitPx: 120, // B
   tapFeedbackMs: 100, // A: Nielsen 1993
-  repeatTripSpeed: 2, // B
+  walkSpeed: 1, // B, multiplier of the view's base walking speed (1 = as drawn)
+  repeatTripSpeed: 2, // B, same multiplier from the 2nd carry (spec 5.1)
   pitch: { mimi: 1.35, mom: 1.05, npc: 0.9, kid: 1.2, book: 1.0 }, // B, tune by ear
 } as const;

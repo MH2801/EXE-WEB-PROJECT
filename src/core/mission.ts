@@ -56,15 +56,12 @@ export type MissionState = {
 
 type Result = { state: MissionState; effects: Effect[] };
 
-// Neutral walking speed: a multiplier (1 = normal), not a tuning value.
-const NORMAL_SPEED = 1;
-
 const say = (line: LineId): Effect => ({ t: 'say', line });
 const pose = (p: Pose): Effect => ({ t: 'pose', pose: p });
 const SAVE: Effect = { t: 'save' };
 
 const noop = (s: MissionState): Result => ({ state: s, effects: [] });
-const tripSpeed = (trips: number) => (trips >= 2 ? TUNING.repeatTripSpeed : NORMAL_SPEED);
+const tripSpeed = (trips: number) => (trips >= 2 ? TUNING.repeatTripSpeed : TUNING.walkSpeed);
 const wrongLeft = (k: Knowledge): WrongFruit | undefined =>
   NPC_ELIMINATE_ORDER.find((f) => !k.notApple.includes(f));
 const reject = (k: Knowledge, f: WrongFruit): Knowledge =>
@@ -82,10 +79,10 @@ function enterChoosing(s: MissionState): Result {
 
 /** Entering `choosing` first checks whether the world should step in (spec §6). */
 function toChoosing(s: MissionState): Result {
+  // Spec 6: once all four wrong fruits are rejected only apple is left, so no hint at all.
+  if (!wrongLeft(s.knowledge)) return enterChoosing(s);
   if (s.misses >= TUNING.missesForLevel2 && s.support < 2) return enterNpcApple(s);
-  if (s.misses >= TUNING.missesForLevel1 && s.support < 1 && wrongLeft(s.knowledge)) {
-    return enterNpcEliminate(s);
-  }
+  if (s.misses >= TUNING.missesForLevel1 && s.support < 1) return enterNpcEliminate(s);
   return enterChoosing(s);
 }
 
@@ -130,7 +127,7 @@ function enterNpcApple(s: MissionState): Result {
       say('npc.apple'),
       { t: 'npcLeave' },
       pose('surprised'),
-      { t: 'walk', to: 'stall_apple', speed: NORMAL_SPEED },
+      { t: 'walk', to: 'stall_apple', speed: TUNING.walkSpeed },
     ],
   };
 }
@@ -175,8 +172,10 @@ function enterMomNo(s: MissionState, fruit: WrongFruit): Result {
     },
     effects: [
       SAVE,
+      pose('surprised'),
       say('mom.again'),
       { t: 'joke', fruit },
+      pose('happy'),
       say('mimi.oops'),
       { t: 'carry', fruit: null },
       { t: 'mark', fruit },
@@ -211,6 +210,7 @@ function enterTricked(s: MissionState): Result {
     },
     effects: [
       SAVE,
+      pose('happy'),
       say('mimi.trick'),
       { t: 'carry', fruit: 'apple' },
       { t: 'bg', bg: 'market' },
@@ -237,10 +237,10 @@ function enterRecall(s: MissionState): Result {
   };
 }
 
-function enterMemoryReveal(s: MissionState, reaction: LineId[]): Result {
+function enterMemoryReveal(s: MissionState, reaction: Effect[]): Result {
   return {
     state: { ...s, phase: 'memory_reveal', missionDone: true },
-    effects: [{ t: 'recall', show: false }, ...reaction.map(say), SAVE, { t: 'goMemory' }],
+    effects: [{ t: 'recall', show: false }, ...reaction, SAVE, { t: 'goMemory' }],
   };
 }
 
@@ -254,10 +254,10 @@ function enterReplay(s: MissionState): Result {
       say('mom.ask'),
       say('mimi.i_know'),
       { t: 'bg', bg: 'fruit' },
-      { t: 'walk', to: 'stall_apple', speed: NORMAL_SPEED },
+      { t: 'walk', to: 'stall_apple', speed: TUNING.walkSpeed },
       { t: 'carry', fruit: 'apple' },
       { t: 'bg', bg: 'market' },
-      { t: 'walk', to: 'mom', speed: NORMAL_SPEED },
+      { t: 'walk', to: 'mom', speed: TUNING.walkSpeed },
       say('mom.thanks'),
       { t: 'carry', fruit: null },
       pose('happy'),
@@ -288,7 +288,7 @@ function enterIntro(s: MissionState): Result {
       pose('idle'),
       say('mom.ask'),
       say('mimi.okay'),
-      { t: 'walk', to: 'fruit_area', speed: NORMAL_SPEED },
+      { t: 'walk', to: 'fruit_area', speed: TUNING.walkSpeed },
     ],
   };
 }
@@ -392,9 +392,8 @@ function onNo(s: MissionState): Result {
 }
 
 function onIdle(s: MissionState): Result {
-  if (s.support >= 2) return noop(s);
-  if (s.support === 0 && wrongLeft(s.knowledge)) return enterNpcEliminate(s);
-  return enterNpcApple(s);
+  if (s.support >= 2 || !wrongLeft(s.knowledge)) return noop(s);
+  return s.support === 0 ? enterNpcEliminate(s) : enterNpcApple(s);
 }
 
 function onBookOpen(s: MissionState): Result {
@@ -418,7 +417,8 @@ function onRecallPick(s: MissionState, fruit: FruitId): Result {
   const first = fruit === 'apple';
   return enterMemoryReveal(
     { ...s, stats: { ...s.stats, recallFirstTry: first } },
-    [first ? 'mimi.yes_apple' : 'mimi.i_know'],
+    // A child who cannot read must see which fruit is the apple before Mimi says it.
+    first ? [say('mimi.yes_apple')] : [{ t: 'lift', fruit: 'apple' }, say('mimi.i_know')],
   );
 }
 

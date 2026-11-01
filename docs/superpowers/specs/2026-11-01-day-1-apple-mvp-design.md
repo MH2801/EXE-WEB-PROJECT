@@ -336,6 +336,7 @@ Theo Numbers Policy của skill `game-design`. A: có nguồn. B: giá trị kh�
 | Rảnh trước mức 2 | thêm 25 giây | B | Như trên | Giảm |
 | Số lần No với apple trước `tricked` | 3 | B, từ phản hồi ý tưởng | Bé thấy buồn cười | Giảm còn 2 |
 | Dừng hồi hộp trước khi mẹ trả lời | 1,2 giây | B | Bé nhìn chờ, không bấm loạn | Rút ngắn |
+| Tốc độ đi của Mimi: lần mang thứ nhất, từ lần thứ hai | 1 lần, 2 lần tốc độ gốc | B, "nhanh gấp đôi" theo §5.1 | Bé không thấy cảnh lặp nặng nề | Tăng lần thứ hai |
 | Tốc độ đọc | 0,85 lần | B | Người lớn nghe rõ từng từ | Giảm hoặc tăng 0,05 |
 | Thời hạn tối đa một câu | 1,5 giây + 90 ms mỗi ký tự | B | Không câu nào bị cắt | Tăng |
 | Một lượt đi đúng | khoảng 3 phút | B | Bé không rời mắt | Rút cảnh |
