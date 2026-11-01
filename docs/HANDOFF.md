@@ -1,5 +1,10 @@
 # Handoff
 
+## 0. Đang làm: Chuyến đi của Mimi
+Nhánh `feat/chuyen-di`, theo [plan](superpowers/plans/2026-11-02-chuyen-di-cua-mimi.md). Batch A (Task 1–5, lõi logic) xong, chưa có màn hình nào của lối chơi mới. Đang dừng ở điểm dừng sau Task 5, chờ founder. Việc tiếp theo: Task 6 (hình, font, hệ màu).
+- Báo cáo review: `build/review-batch-a.md`, `build/ponytail-batch-a.md`.
+- Quyết định và việc chuyển cho task sau: `.superpowers/sdd/2026-11-02-chuyen-di-cua-mimi/progress.md`.
+
 ## 1. Hiện trạng
 Nhánh `feat/mvp`: Batch A, B, C, D xong, mỗi task một commit, chưa push. `tsc`, 88 test đơn vị và `build` đều qua. 14 test trình duyệt (e2e) có trong `tests/e2e/`. Chưa có repo GitHub và tài khoản Cloudflare.
 - Chuẩn bị phát hành (Task 12) xong: `wrangler.jsonc`, [ADR 0003](decisions/0003-cloudflare-workers-static-assets.md), [playtest](playtest-day-1.md), [kiểm tra §12](acceptance-12.md), `README.md`.
