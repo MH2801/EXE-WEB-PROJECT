@@ -1,7 +1,7 @@
 # Handoff
 
 ## 0. Đang làm: Chuyến đi của Mimi
-Nhánh `feat/chuyen-di`, theo [plan](superpowers/plans/2026-11-02-chuyen-di-cua-mimi.md). Batch A (Task 1–5, lõi logic) và Task 6 (hình, font, hệ màu) xong, chưa có màn hình nào của lối chơi mới. Đang dừng sau Task 6, chờ founder duyệt `build/montage-task6.png`. Việc tiếp theo: Task 7.
+Nhánh `feat/chuyen-di`, theo [plan](superpowers/plans/2026-11-02-chuyen-di-cua-mimi.md). Task 1–8 xong: lõi logic, hình, HUD, Nhà Mimi, Sổ từ, khu phụ huynh. Nút Go ở Nhà chưa chạy vì scene chuyến đi chưa có. Founder đã duyệt hình Task 6. Việc tiếp theo: Task 9, rồi Task 10 và điểm dừng chơi thử bản thô.
 - Báo cáo review: `build/review-batch-a.md`, `build/ponytail-batch-a.md`.
 - Quyết định và việc chuyển cho task sau: `.superpowers/sdd/2026-11-02-chuyen-di-cua-mimi/progress.md`.
 
