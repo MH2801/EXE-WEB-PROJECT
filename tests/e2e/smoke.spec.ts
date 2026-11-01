@@ -78,9 +78,7 @@ test('no external requests', async ({ page }) => {
   expect(foreign).toEqual([]);
 });
 
-// BUG (product, not fixed here): addRotateOverlay reads scale.isPortrait, which follows the fixed 16:9 game size, so it is never true. Remove test.fail() when fixed.
 test('portrait shows the rotate graphic and no text', async ({ page }) => {
-  test.fail();
   await page.setViewportSize({ width: 600, height: 900 });
   await open(page);
   const shown = await page.evaluate(() => {

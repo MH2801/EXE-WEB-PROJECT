@@ -76,13 +76,17 @@ export function addRotateOverlay(scene: Phaser.Scene): void {
   const arrow = scene.add.graphics().lineStyle(10, 0xffffff, 1).beginPath().arc(0, 0, 190, -0.9, 0.5, false).strokePath();
   const icon = scene.add.container(gameW / 2, gameH / 2, [phone, arrow]).setDepth(1000);
   const sync = () => {
-    const portrait = scene.scale.isPortrait;
+    const portrait = window.innerHeight > window.innerWidth; // FIT keeps game size 16:9, so scale.isPortrait never flips
     icon.setVisible(portrait);
     cover.setVisible(portrait);
     cover.input!.enabled = portrait;
   };
   if (!reducedMotion()) scene.tweens.add({ targets: phone, angle: 90, duration: 900, yoyo: true, repeat: -1, hold: 400 });
   scene.scale.on(Phaser.Scale.Events.ORIENTATION_CHANGE, sync);
-  scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => scene.scale.off(Phaser.Scale.Events.ORIENTATION_CHANGE, sync));
+  scene.scale.on(Phaser.Scale.Events.RESIZE, sync);
+  scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+    scene.scale.off(Phaser.Scale.Events.ORIENTATION_CHANGE, sync);
+    scene.scale.off(Phaser.Scale.Events.RESIZE, sync);
+  });
   sync();
 }
