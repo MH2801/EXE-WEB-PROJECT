@@ -6,6 +6,7 @@ import { Memory } from './scenes/Memory';
 import { Mission } from './scenes/Mission';
 import { Parent } from './scenes/Parent';
 import { Title } from './scenes/Title';
+import { WordBook } from './scenes/WordBook';
 
 const game = new Phaser.Game({
   type: Phaser.AUTO,
@@ -16,7 +17,7 @@ const game = new Phaser.Game({
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
-  scene: [Boot, Home, Title, Mission, Memory, Parent],
+  scene: [Boot, Home, Title, Mission, Memory, Parent, WordBook],
 });
 
 if (import.meta.env.DEV) (window as unknown as { __game: Phaser.Game }).__game = game;

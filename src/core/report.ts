@@ -1,3 +1,6 @@
+import { WORDS } from '../content/words';
+import { knownWords } from './knowledge';
+import type { TripSave } from './tripSave';
 import type { Save } from './types';
 
 export type ReportRow = { label: string; value: string };
@@ -27,5 +30,20 @@ export function buildReport(save: Save): ReportRow[] {
     },
     { label: 'Tự nhận ra apple khi gặp lại', value: recall },
     { label: 'Nên củng cố', value: advice },
+  ];
+}
+
+/** v2 report (spec 11): facts only. Mimi knowing a word is not the child knowing it, so no praise. */
+export function buildTripReport(save: TripSave): ReportRow[] {
+  if (save.trips === 0) return [{ label: 'Chưa có dữ liệu', value: 'Bé chưa chơi chuyến nào. Báo cáo sẽ hiện sau chuyến đầu tiên.' }];
+  const { brain } = save;
+  const list = (words: string[], none: string) => (words.length ? words.join(', ') : none);
+  const met = WORDS.map((d) => d.id).filter((w) => brain[w].state !== 'unknown' || brain[w].notThis.length > 0);
+  const known = knownWords(brain);
+  return [
+    { label: 'Từ bé đã gặp', value: list(met, 'Chưa có') },
+    { label: 'Bé dùng được không cần gợi ý', value: list(known.filter((w) => brain[w].state === 'strong'), 'Chưa có từ nào') },
+    { label: 'Cần củng cố', value: list(known.filter((w) => brain[w].state !== 'strong'), 'Chưa có từ nào') },
+    { label: 'Số lần cần robot giúp', value: `${save.helped} lần` },
   ];
 }

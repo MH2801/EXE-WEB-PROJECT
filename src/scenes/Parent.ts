@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
-import { buildReport } from '../core/report';
+import { buildReport, buildTripReport } from '../core/report';
 import { browserStore, clearSave, loadSave, writeSave } from '../core/save';
+import { clearTripSave, loadTripSave, writeTripSave } from '../core/tripSave';
 import { PARENT } from '../content/lines';
 import { TUNING } from '../content/tuning';
 import { addRotateOverlay, makeButton, makeSpeaker } from '../view/ui';
@@ -11,9 +12,14 @@ const FONT = 'Arial, sans-serif'; // renders Vietnamese diacritics
 export class Parent extends Phaser.Scene {
   private page: Phaser.GameObjects.GameObject[] = [];
   private depth = 0;
+  private from: 'Home' | 'Title' = 'Title'; // Title stays as Day 1 (v1); Home uses v2
 
   constructor() {
     super('Parent');
+  }
+
+  init(data?: { from?: 'Home' | 'Title' }): void {
+    this.from = data?.from ?? 'Title';
   }
 
   create(): void {
@@ -51,7 +57,7 @@ export class Parent extends Phaser.Scene {
 
   private backBtn(): void {
     const p = TUNING.parent;
-    this.btn(p.back.x, p.back.y, p.back.w, p.back.h, PARENT.back, p.btnFont, () => this.scene.start('Title'));
+    this.btn(p.back.x, p.back.y, p.back.w, p.back.h, PARENT.back, p.btnFont, () => this.scene.start(this.from));
   }
 
   private showGate(): void {
@@ -75,15 +81,20 @@ export class Parent extends Phaser.Scene {
   private showReport(): void {
     this.clear();
     const p = TUNING.parent;
-    const save = loadSave(browserStore());
+    const store = browserStore();
+    const v2 = this.from === 'Home';
+    const save = loadSave(store);
+    const trip = loadTripSave(store);
+    const subs = v2 ? trip.viSubtitles : save.viSubtitles;
     this.backBtn();
     this.text(p.title.x, p.title.y, PARENT.title, p.title.font, { fontStyle: 'bold' }).setOrigin(0.5);
-    this.btn(p.toggle.x, p.toggle.y, p.toggle.w, p.toggle.h, save.viSubtitles ? PARENT.subOn : PARENT.subOff, p.btnFont, () => {
-      writeSave(browserStore(), { ...save, viSubtitles: !save.viSubtitles });
+    this.btn(p.toggle.x, p.toggle.y, p.toggle.w, p.toggle.h, subs ? PARENT.subOn : PARENT.subOff, p.btnFont, () => {
+      if (v2) writeTripSave(store, { ...trip, viSubtitles: !subs });
+      else writeSave(store, { ...save, viSubtitles: !subs });
       this.showReport();
     });
     this.btn(p.reset.x, p.reset.y, p.reset.w, p.reset.h, PARENT.reset, p.btnFont, () => this.confirmReset());
-    buildReport(save).forEach((r, i) => {
+    (v2 ? buildTripReport(trip) : buildReport(save)).forEach((r, i) => {
       const y = p.rowsY + i * p.rowStep;
       this.text(p.rowX, y, r.label, p.labelFont, { fontStyle: 'bold', color: '#3a5a75' }); // 6.7:1 on the cream
       this.text(p.rowX, y + 38, r.value, p.valueFont, { wordWrap: { width: p.wrapW } });
@@ -106,6 +117,7 @@ export class Parent extends Phaser.Scene {
     };
     this.btn(gameW / 2 - c.btnGap, c.btnY, c.btnW, TUNING.minHitPx, PARENT.resetYes, TUNING.parent.btnFont, () => {
       clearSave(browserStore());
+      clearTripSave(browserStore()); // both keys, from either screen (spec 11)
       this.depth = 0;
       this.showReport();
     });

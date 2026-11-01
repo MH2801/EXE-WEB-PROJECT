@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { buildReport } from '../src/core/report';
+import { buildReport, buildTripReport, type ReportRow } from '../src/core/report';
 import { defaultSave } from '../src/core/save';
+import { defaultTripSave, type TripSave } from '../src/core/tripSave';
 
 describe('report', () => {
   it('has 5 rows', () => {
@@ -35,6 +36,44 @@ describe('report', () => {
       s.stats.recallFirstTry = x;
       s.knowledge.learnedFrom = 'child';
       expect(JSON.stringify(buildReport(s)).toLowerCase()).not.toContain('điểm');
+    }
+  });
+});
+
+describe('buildTripReport', () => {
+  const played = (): TripSave => ({ ...defaultTripSave(), trips: 3 });
+  const row = (rows: ReportRow[], label: string) => rows.find((r) => r.label === label)?.value ?? '';
+
+  it('says honestly when nothing was played', () => {
+    const rows = buildTripReport(defaultTripSave());
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.value.toLowerCase()).toContain('chưa chơi');
+  });
+  it('puts a strong word under "can use without a hint" only', () => {
+    const s = played();
+    s.brain.banana = { ...s.brain.banana, state: 'strong' };
+    const rows = buildTripReport(s);
+    expect(row(rows, 'Bé dùng được không cần gợi ý')).toContain('banana');
+    expect(row(rows, 'Cần củng cố')).not.toContain('banana');
+  });
+  it('puts a remembered, not strong word under "needs practice"', () => {
+    const s = played();
+    s.brain.orange = { ...s.brain.orange, state: 'remembered' };
+    const rows = buildTripReport(s);
+    expect(row(rows, 'Cần củng cố')).toContain('orange');
+    expect(row(rows, 'Bé dùng được không cần gợi ý')).not.toContain('orange');
+  });
+  it('counts the times the robot helped', () => {
+    const s = { ...played(), helped: 4 };
+    expect(row(buildTripReport(s), 'Số lần cần robot giúp')).toContain('4');
+  });
+  it('has no score, no comparison, no praise', () => {
+    const s = played();
+    s.brain.banana = { ...s.brain.banana, state: 'strong' };
+    s.helped = 2;
+    for (const save of [defaultTripSave(), played(), s]) {
+      const text = JSON.stringify(buildTripReport(save)).toLowerCase();
+      for (const bad of ['điểm', 'so với', 'giỏi', 'xuất sắc', 'tuyệt']) expect(text).not.toContain(bad);
     }
   });
 });

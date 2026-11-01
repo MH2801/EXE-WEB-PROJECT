@@ -115,7 +115,7 @@ export function oopsLine(w: WordId, item: FruitId): LineId {
 }
 
 /** Words printed on buttons and the book; the game is playable without reading them. */
-export const LABELS = { yes: 'Yes', no: 'No', apple: 'APPLE' } as const;
+export const LABELS = { yes: 'Yes', no: 'No', apple: 'APPLE', go: 'Go' } as const;
 
 /** Parent-facing Vietnamese text (not child lines: the 7-word rule does not apply). */
 export const PARENT = {

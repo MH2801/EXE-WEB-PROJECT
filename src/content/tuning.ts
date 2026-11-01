@@ -112,6 +112,41 @@ export const TUNING = {
     confirm: { w: 1000, h: 480, askFont: 44, btnY: 590, btnW: 300, btnGap: 200 },
     btnFont: 34,
   },
+  // Home, return screen and Word Book (Task 8). All B, tune by eye; 1672x941 frame, centres.
+  home: {
+    mimi: { x: 250, y: 850, scale: 0.7, wakeMs: 900 }, // wakeMs: asleep -> awake after a long trip
+    // Opaque panels over home.svg's painted window patterns, so every window is drawn from the save.
+    panels: [
+      { x: 647, y: 503, w: 123, h: 353, fill: 0xeaf7ff },
+      { x: 856, y: 457, w: 149, h: 470, fill: 0xf4fbff },
+      { x: 1058, y: 523, w: 110, h: 314, fill: 0xeaf7ff },
+      { x: 1260, y: 483, w: 149, h: 392, fill: 0xf4fbff },
+      { x: 1476, y: 542, w: 136, h: 274, fill: 0xeaf7ff },
+    ],
+    // One window per word, in WORDS order (apple first).
+    windows: [
+      { x: 647, y: 420, w: 80, h: 100 }, { x: 647, y: 560, w: 80, h: 100 },
+      { x: 856, y: 340, w: 100, h: 120 }, { x: 856, y: 500, w: 100, h: 120 },
+      { x: 1058, y: 470, w: 80, h: 100 },
+      { x: 1260, y: 400, w: 100, h: 120 }, { x: 1260, y: 560, w: 100, h: 120 },
+      { x: 1476, y: 470, w: 90, h: 110 },
+    ],
+    windowOff: 0xa9d2ee, windowOffEdge: 0x7fbde3, // the painted unlit look
+    shelf: { x0: 620, step: 92, plankX: 945, plankY: 866, plankW: 770, plankH: 16, itemY: 800, itemPx: 72, labelY: 898, labelFont: 24, dimAlpha: 0.25 },
+    go: { x: 1520, y: 810, w: 280, h: 140 },
+    second: { x: 1520, y: 660, w: 280, h: 140 }, // Word Book on Home, Home on the return screen
+    lock: { x: 80, y: 80, w: 120, h: 120 },
+    gears: { right: 1632, y: 60, font: 54, icon: 26, gainDy: 62, gainFont: 40 },
+    card: { x: 330, y: 270, w: 260, h: 300 }, // the new word, above Mimi and clear of every window
+    door: { x: 470, y: 840, px: 190, q: 64 }, // the ajar door with "?"; px = height
+    light: { delayMs: 600, popMs: 450, popScale: 1.35, rays: 8, rayInner: 40, rayOuter: 80, rayMs: 600 }, // first light of the new window
+    iconPx: 96, // generated icon textures
+  },
+  wordBook: {
+    leaf: { w: 270, h: 290, gapX: 40, rowY: [250, 570] as const, pic: 120, swatch: 120, font: 42, q: 130, border: 6, goldBorder: 12, star: 26 },
+    back: { x: 110, y: 110, w: 140, h: 140 },
+    mimi: { x: 115, y: 930, scale: 0.4 },
+  },
   // Trip numbers (spec 14).
   trip: {
     batteryMax: 3, // B
