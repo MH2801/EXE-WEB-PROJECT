@@ -10,8 +10,8 @@ import type { TripSave } from '../src/core/tripSave';
 import { FRUITS, type FruitId, type WordId } from '../src/core/types';
 import { rng } from './helpers/play';
 import {
-  CHEST, MYSTERY, NO, SAFE, YES, allWordsSave, kinds, lastPose, legalEvents, masked, mkSave, playTrip,
-  roomOf, says, settle,
+  CHEST, MYSTERY, NO, RANK, SAFE, YES, allWordsSave, kinds, lastPose, legalEvents, masked, mkSave, perfectTrip, playTrip,
+  ranks, roomOf, says, settle,
 } from './helpers/tripPlay';
 
 const stallTap = (fruit: FruitId): TripEvent => ({ t: 'tapStall', fruit });
@@ -112,14 +112,29 @@ describe('hidden truth', () => {
     expect(step(asking, { t: 'idle' })).toEqual({ state: asking, effects: [] });
   });
 
-  it('support level 2 with no unmarked wrong stall does nothing visible', () => {
+  it('support level 2 with no unmarked wrong stall still nudges, and rung 3 fires on the next idle', () => {
     const t = teachAt();
     const [w1, w2] = wrongOf(t) as [FruitId, FruitId];
     const s = playTrip(A, SEED, [MYSTERY, stallTap(w1), NO, stallTap(w2), NO, { t: 'idle' }, { t: 'idle' }]);
     // level 1 then level 2 with both wrong stalls already refused by the child.
     expect(s.state.phase).toBe('teach');
     expect(s.state.teach!.support).toBe(2);
-    expect(s.per[7]).toEqual([]);
+    // A visible effect, so the scene restarts its idle clock (an empty result would stop the ladder).
+    expect(s.per[7]).toEqual([{ t: 'book', word: 'banana' }]);
+    const i3 = step(s.state, { t: 'idle' });
+    expect(i3.effects).toContainEqual({ t: 'helper', item: answerOf(t), line: wordLine('npc', 'banana') });
+    expect(i3.state.phase).toBe('believed');
+  });
+
+  it('the ladder marking the last stall does not say the trick line', () => {
+    const t = teachAt();
+    const [w1, w2] = wrongOf(t) as [FruitId, FruitId];
+    const s = playTrip(A, SEED, [MYSTERY, stallTap(answerOf(t)), NO, stallTap(w1), NO, { t: 'idle' }]);
+    const r = step(s.state, { t: 'idle' }); // rung 2 takes w2, the last unmarked stall
+    expect(r.effects).toContainEqual({ t: 'markStall', item: w2 });
+    expect(says(r.effects)).not.toContain('mimi.trick');
+    expect(r.state.phase).toBe('believed');
+    expect(r.state.helped).toBe(A.helped + 1);
   });
 
   it('a stall marked by No (or by the helper) ignores taps', () => {
@@ -162,7 +177,7 @@ describe('gate and robot', () => {
     const r = step(rb, card(w));
     expect(r.state.battery).toBe(rb.battery - 1);
     expect(r.effects).toContainEqual({ t: 'battery', left: rb.battery - 1 });
-    expect(kinds(r.effects)).toContain('joke');
+    expect(r.effects).toContainEqual({ t: 'joke', item: null }); // the robot's own scene; fruit jokes belong to the cashier
     expect(r.state.phase).toBe('robot');
   });
 
@@ -200,14 +215,31 @@ describe('gate and robot', () => {
     expect(r.state.phase).toBe('travel');
   });
 
-  it('right feedback is larger than wrong feedback', () => {
+  it('right feedback beats the wrong reaction at the gate, the robot and the cashier (reward points)', () => {
+    // Reward points: a line, collect, gear, reveal or joke = 1; celebrate small = 2; celebrate big = 4. Pose, battery, dropCard = 0.
+    const points = (fx: TripEffect[]) =>
+      fx.reduce((n, e) => n + (e.t === 'celebrate' ? (e.size === 'big' ? 4 : 2) : ['say', 'collect', 'gears', 'reveal', 'joke'].includes(e.t) ? 1 : 0), 0);
     const g = atGate();
-    const right = step(g, rightCard(g)).effects;
-    const wrong = step(g, card(wrongCard(g))).effects;
-    expect(kinds(right)).toEqual(expect.arrayContaining(['collect', 'celebrate']));
-    expect(right).toContainEqual({ t: 'celebrate', size: 'small' });
-    expect(kinds(wrong)).not.toContain('collect');
-    expect(kinds(wrong)).not.toContain('celebrate');
+    const gateRight = step(g, rightCard(g)).effects;
+    const gateWrong = step(g, card(wrongCard(g))).effects;
+    expect(points(gateRight)).toBe(4); // mem line + collect + celebrate small
+    expect(points(gateWrong)).toBe(1); // the gate reads the word again
+    expect(says(gateRight)).toContain(wordLine('mem', gateOf(g).word));
+    expect(gateRight).toContainEqual({ t: 'celebrate', size: 'small' });
+    const rb = atRobot();
+    const robotRight = step(rb, rightCard(rb)).effects;
+    const robotWrong = step(rb, card(wrongCard(rb))).effects;
+    expect(points(robotRight)).toBe(5); // yum + mem lines + collect + celebrate small
+    expect(points(robotWrong)).toBe(3); // joke + hee + re-read
+    // Cashier: from the last pause to just before mom's thanks.
+    const verdict = (pick: 'right' | 'wrong') => {
+      const t = teachAt();
+      const fx = playTrip(A, SEED, [MYSTERY, stallTap(pick === 'right' ? answerOf(t) : wrongOf(t)[0]!), YES]).per[3]!;
+      return fx.slice(kinds(fx).lastIndexOf('wait') + 1, fx.findIndex((e) => e.t === 'say' && e.line === 'mom.done'));
+    };
+    expect(points(verdict('right'))).toBe(6); // ok line + celebrate big + gears
+    expect(points(verdict('wrong'))).toBe(4); // joke + oops + reveal + this
+    expect(kinds(verdict('wrong'))).not.toContain('celebrate');
   });
 });
 
@@ -305,6 +337,17 @@ describe('cashier', () => {
     expect(fx.filter((e) => e.t === 'gears')).toHaveLength(2); // only the two remembered items pay
     expect(applyTrip(A, p.state).gears).toBe(A.gears + 2 * TUNING.trip.gearsPerItem);
     expect(lastPose(fx)).toEqual({ t: 'pose', pose: 'happy' });
+    // The refusal: surprised, then happy (GDD 7). The summary tells Home this is no new card.
+    const poses = fx.slice(iJoke).filter((e) => e.t === 'pose').map((e) => e.t === 'pose' && e.pose);
+    expect(poses.slice(0, 2)).toEqual(['surprised', 'happy']);
+    const home = fx.find((e) => e.t === 'goHome');
+    expect(home && home.t === 'goHome' && home.summary).toEqual({ outcome: 'home', newWord: 'banana', learned: false, gears: 2 * TUNING.trip.gearsPerItem });
+  });
+
+  it('every accepted verdict is met with pose happy', () => {
+    const fx = run('right').p.per[3]!;
+    const names = fx.map((e) => (e.t === 'say' && e.line.startsWith('ok.') ? 'ok' : e.t === 'pose' ? e.pose : e.t));
+    names.forEach((n, i) => { if (n === 'ok') expect(names[i + 1]).toBe('happy'); });
   });
 });
 
@@ -343,8 +386,9 @@ describe('exposures and endings', () => {
     const t = teachAt();
     const p = playTrip(A, SEED, [MYSTERY, stallTap(answerOf(t)), YES]);
     const fx = p.effects;
+    // Real hearings: each is a `say` the speaker will play (plus the summary Home reads).
     const heard = [
-      fx.some((e) => e.t === 'book' && e.word === 'banana'),
+      says(fx).includes('book.banana'),
       says(fx).includes('ask.banana'),
       says(fx).includes('yes.banana'),
       says(fx).includes('mem.banana'),
@@ -362,6 +406,25 @@ describe('exposures and endings', () => {
     const t = teachAt();
     const p = playTrip(A, SEED, [MYSTERY, stallTap(wrongOf(t)[0]!), YES]);
     expect(lastPose(p.per[3]!)).toEqual({ t: 'pose', pose: 'happy' });
+  });
+
+  it('the book speaks: the word on entry, and a clue or a word when tapped', () => {
+    const t = teachAt();
+    const enter = playTrip(A, SEED, [MYSTERY]).per[1]!;
+    expect(enter[kinds(enter).indexOf('book') + 1]).toEqual({ t: 'say', line: 'book.banana' });
+    for (const clue of ['yellow', 'long', 'banana'] as const) {
+      expect(step(t, { t: 'bookWord', clue })).toEqual({ state: t, effects: [{ t: 'say', line: `book.${clue}` }] });
+    }
+    const fork = playTrip(A, SEED, []).state;
+    expect(step(fork, { t: 'bookWord', clue: 'long' })).toEqual({ state: fork, effects: [] });
+  });
+
+  it('the gate reads the word with the book voice, not the robot', () => {
+    const g = playTrip(B, 3, [SAFE, CHEST]);
+    const w = gateOf(g.state).word;
+    expect(says(g.per[2]!)).toContain(wordLine('book', w));
+    expect(says(g.per[2]!)).not.toContain(wordLine('give', w));
+    expect(says(step(g.state, card(wrongCard(g.state))).effects)).toEqual([wordLine('book', w)]);
   });
 
   it('ignored taps: events in the wrong phase change nothing', () => {
@@ -401,7 +464,8 @@ describe('whole trips', () => {
     for (let seed = 1; seed <= 1000; seed++) {
       const rnd = rng(seed * 31 + 7);
       const save = randomSave(rnd);
-      const before = knownWords(save.brain);
+      const before = ranks(save.brain);
+      const lost = (b: typeof save.brain) => ranks(b).some((x, i) => before[i]! >= RANK.remembered && x < before[i]!);
       let r = settle(startTrip(save, seed));
       let steps = 0;
       while (r.state.phase !== 'end' && steps++ < 500) {
@@ -410,13 +474,12 @@ describe('whole trips', () => {
         const junk: TripEvent[] = [YES, NO, CHEST, { t: 'idle' }, { t: 'tapDoor', door: 'safe' }];
         const e = rnd() < 0.1 ? junk[Math.floor(rnd() * junk.length)]! : legal[Math.floor(rnd() * legal.length)]!;
         r = settle(step(r.state, e));
-        const now = knownWords(r.state.brain);
-        if (!before.every((w) => now.includes(w))) throw new Error(`seed ${seed}: knowledge shrank`);
+        if (lost(r.state.brain)) throw new Error(`seed ${seed}: knowledge level fell (strong -> remembered counts)`);
         expect(r.state.battery).toBeGreaterThanOrEqual(0);
       }
       if (r.state.phase !== 'end') throw new Error(`seed ${seed}: stuck in ${r.state.phase} after ${steps} steps`);
       const out = applyTrip(save, r.state);
-      if (!before.every((w) => knownWords(out.brain).includes(w))) throw new Error(`seed ${seed}: saved knowledge shrank`);
+      if (lost(out.brain)) throw new Error(`seed ${seed}: saved knowledge level fell`);
       if (Object.values(out.brain).some((b) => b.state === 'believed')) throw new Error(`seed ${seed}: believed was saved`);
       if (out.trips !== save.trips + 1 || out.gears < save.gears) throw new Error(`seed ${seed}: bad counters`);
     }
@@ -433,6 +496,76 @@ describe('whole trips', () => {
       }
       expect(r.state.phase).toBe('end');
       expect(knownWords(applyTrip(save, r.state).brain)).toHaveLength(WORDS.length);
+    }
+  });
+});
+
+describe('hidden truth, widened', () => {
+  // Fixed taps after Yes that never look at the picked item: one wrong card first at every gate and robot, then the right one.
+  const driver = (s: TripState): TripEvent => {
+    if (s.phase === 'fork') return MYSTERY;
+    if (s.phase === 'chest') return CHEST;
+    if (s.phase === 'gate' || s.phase === 'robot') return s.firstTry && s.hand.length > 1 ? card(wrongCard(s)) : rightCard(s);
+    throw new Error(`no driver for ${s.phase}`);
+  };
+  const toTeach = (save: TripSave, seed: number) => {
+    let r = settle(startTrip(save, seed));
+    for (let i = 0; i < 60 && r.state.phase !== 'teach'; i++) r = settle(step(r.state, driver(r.state)));
+    expect(r.state.phase).toBe('teach');
+    return r;
+  };
+  const afterYes = (prefix: ReturnType<typeof toTeach>, pick: FruitId) => {
+    const ask = settle(step(prefix.state, stallTap(pick)));
+    let r = settle(step(ask.state, YES));
+    const yes = r.effects;
+    const post = [...r.effects];
+    for (let i = 0; i < 60 && r.state.phase !== 'end'; i++) {
+      r = settle(step(r.state, driver(r.state)));
+      post.push(...r.effects);
+    }
+    expect(r.state.phase).toBe('end');
+    return { ask: ask.effects, yes, post };
+  };
+  const cases: [string, TripSave][] = [
+    ['A banana', A],
+    ['B lemon', B],
+    ['C red (colour)', C],
+    ['C yellow (colour)', mkSave(['banana', 'orange', 'lemon', 'grape', 'red'])],
+  ];
+  for (const [name, save] of cases) {
+    it(`hidden truth: ${name}, every stall, same taps after Yes`, () => {
+      for (const seed of [1, 2, 3]) {
+        const prefix = toTeach(save, seed);
+        const answer = answerOf(prefix.state);
+        const stalls = prefix.state.teach!.stalls;
+        const right = afterYes(prefix, answer);
+        for (const pick of stalls) {
+          const run = afterYes(prefix, pick);
+          // The bubble and the basket show exactly what the child picked, for right and wrong alike.
+          const bub = run.yes.find((e) => e.t === 'bubble');
+          const col = run.yes.find((e) => e.t === 'collect');
+          expect(bub && bub.t === 'bubble' && bub.show).toBe(pick);
+          expect(col && col.t === 'collect' && col.item).toBe(pick);
+          if (pick === answer) continue;
+          expect(masked(run.ask)).toBe(masked(right.ask));
+          const cut = (fx: TripEffect[]) => fx.slice(0, kinds(fx).lastIndexOf('wait') + 1);
+          expect(masked(cut(run.post))).toBe(masked(cut(right.post)));
+          expect(JSON.stringify(cut(run.post))).not.toBe(JSON.stringify(cut(right.post)));
+          expect(JSON.stringify(run.post.slice(cut(run.post).length))).not.toBe(JSON.stringify(right.post.slice(cut(right.post).length)));
+        }
+      }
+    });
+  }
+});
+
+describe('word choice over several trips', () => {
+  it('at R=3 and R=4 a flawless child makes every word strong within three trips', () => {
+    for (const known of [['banana', 'orange'], ['banana', 'orange', 'lemon']] as WordId[][]) {
+      for (let seed = 1; seed <= 30; seed++) {
+        let save = mkSave(known);
+        for (let trip = 1; trip <= 3; trip++) save = applyTrip(save, perfectTrip(save, seed * 10 + trip));
+        for (const w of ['apple', ...known] as WordId[]) expect(save.brain[w].state, `${w} seed ${seed}`).toBe('strong');
+      }
     }
   });
 });

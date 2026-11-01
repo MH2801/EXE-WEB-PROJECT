@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { generateTrip, patternFor, makeRng, type Room } from '../src/core/tripgen';
 import { freshBrain, knownWords, type Brain } from '../src/core/knowledge';
-import { WORDS, wordDef } from '../src/content/words';
+import { ITEM_COLOR, WORDS, wordDef } from '../src/content/words';
 import { TUNING } from '../src/content/tuning';
 
 /** Brain where the first n words (WORDS order) are remembered. */
@@ -87,6 +87,23 @@ describe('tripgen', () => {
     }
   });
 
+  it('no card is true of the target: "a red one" is never dealt with an apple (R=6..8)', () => {
+    const colourOf = (w: string) => (wordDef(w as never).kind === 'color' ? w : ITEM_COLOR[w as keyof typeof ITEM_COLOR]);
+    let colourRooms = 0;
+    for (let n = 6; n <= 8; n++) for (let s = 0; s < 500; s++) {
+      for (const r of generateTrip(brainWith(n), 1, s).rooms) {
+        if (r.kind !== 'gate' && r.kind !== 'robot') continue;
+        expect(r.hand).toHaveLength(TUNING.trip.handSize);
+        for (const w of r.hand) {
+          if (w === r.word || wordDef(w).kind === wordDef(r.word).kind) continue;
+          expect(colourOf(w), `R=${n} target ${r.word} card ${w}`).not.toBe(colourOf(r.word));
+        }
+        if (wordDef(r.word).kind === 'color') colourRooms++;
+      }
+    }
+    expect(colourRooms).toBeGreaterThan(100); // the test really met colour targets
+  });
+
   it('a believed word never appears in a hand or a stall', () => {
     const b = brainWith(4);
     b.red.state = 'believed';
@@ -108,7 +125,8 @@ describe('tripgen', () => {
     const b = brainWith(4, { apple: { state: 'strong', lastTrip: 1 }, banana: { lastTrip: 9 }, orange: { lastTrip: 2 }, lemon: { lastTrip: 4 } });
     for (let s = 0; s < 50; s++) {
       const ws = wordRooms(generateTrip(b, 10, s).rooms).map((r) => r.word);
-      expect(ws).toEqual(['orange', 'lemon', 'banana']);
+      // Gate and robot take the front of the queue; the stall takes the back (the strong apple).
+      expect(ws).toEqual(['apple', 'orange', 'lemon']);
     }
   });
 

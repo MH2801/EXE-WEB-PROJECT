@@ -1,5 +1,5 @@
 import { TUNING } from '../content/tuning';
-import { WORDS, wordDef } from '../content/words';
+import { ITEM_COLOR, WORDS, wordDef } from '../content/words';
 import { knownWords, type Brain } from './knowledge';
 import type { FruitId, WordId } from './types';
 
@@ -53,24 +53,30 @@ export function generateTrip(brain: Brain, _tripNo: number, seed: number): Trip 
     (a, b) => Number(brain[a].state === 'strong') - Number(brain[b].state === 'strong') || brain[a].lastTrip - brain[b].lastTrip,
   );
   let next = 0;
-  const pick = () => queue[next++ % queue.length]!; // repeats only when words run out (spec 5.3)
+  // Gate and robot take the words that most need a first try (front); the stall shows off the best-known (back).
+  // Repeats only when words run out (spec 5.3).
+  const front = () => queue[next++ % queue.length]!;
+  let back = 0;
+  const behind = () => queue[queue.length - 1 - (back++ % queue.length)]!;
 
   const handFor = (word: WordId): WordId[] => {
     const kind = wordDef(word).kind;
-    const rest = known.filter((w) => w !== word);
+    // "Give me a red one" is true of an apple: never deal a card of the other kind that shares the target's colour.
+    const colour = (w: WordId) => (wordDef(w).kind === 'color' ? w : ITEM_COLOR[w as FruitId]);
+    const rest = known.filter((w) => w !== word && !(wordDef(w).kind !== kind && colour(w) === colour(word)));
     const fill = [...shuffle(rest.filter((w) => wordDef(w).kind === kind), rnd), ...shuffle(rest.filter((w) => wordDef(w).kind !== kind), rnd)];
     return shuffle([word, ...fill.slice(0, TUNING.trip.handSize - 1)], rnd);
   };
 
   const rooms: Room[] = ORDER[pattern].map((kind): Room => {
     if (kind === 'cashier') return { kind };
-    if (kind === 'stall') return { kind, word: pick() };
+    if (kind === 'stall') return { kind, word: behind() };
     if (kind === 'fork') {
       const first = WORDS.find((d) => brain[d.id].state === 'unknown');
       const teach = first ? { word: first.id, stalls: shuffle([first.answer, ...first.others], rnd) as TeachRoom['stalls'] } : null;
       return { kind, teach, chestGears: roll(TUNING.trip.chestGears, rnd), bigChestGears: roll(TUNING.trip.bigChestGears, rnd) };
     }
-    const word = pick();
+    const word = front();
     return { kind, word, hand: handFor(word) };
   });
   return { pattern, seed, rooms };

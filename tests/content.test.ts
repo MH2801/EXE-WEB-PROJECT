@@ -46,10 +46,23 @@ describe('content', () => {
     expect(RECALL_FRUITS).toEqual(['apple', 'banana', 'grape']);
   });
   it('per-word lines exist', () => {
-    const kinds: WordLineKey[] = ['ask', 'yes', 'no', 'npc', 'ok', 'this', 'give', 'mem'];
+    const kinds: WordLineKey[] = ['ask', 'yes', 'no', 'npc', 'ok', 'this', 'give', 'mem', 'book'];
     for (const w of WORDS) for (const k of kinds) expect(LINES[wordLine(k, w.id)], `${k}.${w.id}`).toBeDefined();
     for (const w of WORDS) for (const f of FRUITS) expect(LINES[oopsLine(w.id, f)], `${w.id}/${f}`).toBeDefined();
     for (const c of ['red', 'yellow', 'orange', 'green']) expect(LINES, `oopsc.${c}`).toHaveProperty(`oopsc.${c}`);
+  });
+  it('the book can say every word and every clue, one bare word each, Day 1 lines unchanged', () => {
+    for (const w of WORDS) {
+      const l = LINES[wordLine('book', w.id)];
+      expect(l.speaker, w.id).toBe('book');
+      expect(words(l.en), w.id).toBe(1);
+      for (const c of w.clues) expect(LINES, `book.${c}`).toHaveProperty(`book.${c}`);
+    }
+    expect(LINES['book.banana'].en).toBe('banana');
+    expect(LINES['book.long'].vi).toBe('dài');
+    expect(LINES['book.apple']).toEqual({ speaker: 'book', en: 'apple', vi: 'táo' });
+    expect(LINES['book.red']).toEqual({ speaker: 'book', en: 'red', vi: 'đỏ' });
+    expect(LINES['book.round']).toEqual({ speaker: 'book', en: 'round', vi: 'tròn' });
   });
   it('word line wording', () => {
     const en = (id: LineId) => LINES[id].en;

@@ -1,6 +1,6 @@
 import { WORDS } from '../../src/content/words';
 import type { LineId } from '../../src/content/lines';
-import { freshBrain } from '../../src/core/knowledge';
+import { freshBrain, type Brain } from '../../src/core/knowledge';
 import { AUTO_PHASES, startTrip, step } from '../../src/core/trip';
 import type { TripEffect, TripEvent, TripState } from '../../src/core/trip';
 import type { Room } from '../../src/core/tripgen';
@@ -82,4 +82,20 @@ export function legalEvents(s: TripState): TripEvent[] {
     default:
       return [{ t: 'effectsDone' }];
   }
+}
+
+export const RANK = { unknown: 0, believed: 1, remembered: 2, strong: 3 } as const;
+/** Knowledge level per word in WORDS order; it may only go up for words that start remembered or strong. */
+export const ranks = (b: Brain): number[] => WORDS.map((d) => RANK[b[d.id].state]);
+
+/** A flawless trip: safe door, right card every time. */
+export function perfectTrip(save: TripSave, seed: number): TripState {
+  let r = settle(startTrip(save, seed));
+  for (let i = 0; i < 100 && r.state.phase !== 'end'; i++) {
+    const s = r.state;
+    const room = roomOf(s) as { word: WordId };
+    const e: TripEvent = s.phase === 'fork' ? { t: 'tapDoor', door: 'safe' } : s.phase === 'chest' ? { t: 'tapChest' } : { t: 'tapCard', word: room.word };
+    r = settle(step(s, e));
+  }
+  return r.state;
 }

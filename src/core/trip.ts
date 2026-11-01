@@ -133,8 +133,8 @@ export function step(s: TripState, e: TripEvent): Result {
       // Opening the book is never wrong; only the first rung of the ladder makes Mimi notice.
       return (s.phase === 'teach' || s.phase === 'asking') && s.teach!.support >= 1 ? { state: s, effects: [say('mimi.book')] } : noop(s);
     case 'bookWord':
-      // shortcut: clue audio is played by the scene (lines.ts has no clue lines); the core never changes for it. Upgrade if clues get lines.
-      return noop(s);
+      // Every clue and word has a book.<id> line; the core plays it and never changes knowledge for it.
+      return s.phase === 'teach' || s.phase === 'asking' ? { state: s, effects: [say(`book.${e.clue}` as LineId)] } : noop(s);
   }
 }
 
@@ -199,7 +199,7 @@ function enterRoom(s: TripState): Result {
     case 'robot':
       return {
         state: { ...s, phase: r.kind, hand: r.hand, firstTry: true },
-        effects: [{ t: 'room', room: r }, { t: 'hand', words: r.hand }, pose('idle'), say(wordLine('give', r.word))],
+        effects: [{ t: 'room', room: r }, { t: 'hand', words: r.hand }, pose('idle'), say(wordLine(r.kind === 'gate' ? 'book' : 'give', r.word))],
       };
     case 'cashier':
       return enterCashier(s);
@@ -246,7 +246,7 @@ function enterTeach(s: TripState, teach: TeachRoom, lead: TripEffect): Result {
     state: { ...s, phase: 'teach', teach: { word: teach.word, stalls: teach.stalls, marked: [], pick: null, support: 0 } },
     effects: [
       lead, { t: 'room', room: { kind: 'teach', teach } }, pose('think'), bubble('?'),
-      say('mimi.what_this'), { t: 'book', word: teach.word }, { t: 'stalls', enabled: true },
+      say('mimi.what_this'), { t: 'book', word: teach.word }, say(wordLine('book', teach.word)), { t: 'stalls', enabled: true },
     ],
   };
 }
@@ -310,12 +310,13 @@ function onIdle(s: TripState): Result {
   if (t.support === 2) return helperBuys(s, []);
   const answer = wordDef(t.word).answer;
   const wrong = t.stalls.find((f) => f !== answer && !t.marked.includes(f));
-  if (!wrong) return { state: { ...s, teach: { ...t, support: 2 } }, effects: [] };
+  // Nothing left to mark: still a visible nudge, so the scene restarts its idle clock and rung 3 fires on the next idle.
+  if (!wrong) return { state: { ...s, teach: { ...t, support: 2 } }, effects: [{ t: 'book', word: t.word }] };
   const marked = [...t.marked, wrong];
   const lead: TripEffect[] = [{ t: 'helper', item: wrong, line: helperLine(t.word, wrong) }, { t: 'markStall', item: wrong }];
   const next = { ...s, teach: { ...t, support: 2 as const, marked } };
-  // Every stall is now refused (the child said No to the right one): same ending as three Nos.
-  return marked.length >= t.stalls.length ? helperBuys(next, [...lead, say('mimi.trick'), pose('happy')]) : { state: next, effects: lead };
+  // Every stall is now refused (the child said No to the right one): the helper passes by as normal, no trick line (the child was idle).
+  return marked.length >= t.stalls.length ? helperBuys(next, lead) : { state: next, effects: lead };
 }
 
 // ---------------------------------------------------------------- gate and robot
@@ -333,17 +334,18 @@ function onCard(s: TripState, word: WordId): Result {
       },
       [
         ...(r.kind === 'robot' ? [say('robot.yum')] : []),
-        { t: 'hand', words: [] }, pose('happy'), { t: 'collect', item }, { t: 'celebrate', size: 'small' }, orderFx(order),
+        { t: 'hand', words: [] }, pose('happy'), { t: 'collect', item }, say(wordLine('mem', word)),
+        { t: 'celebrate', size: 'small' }, orderFx(order),
       ],
     );
   }
   const hand = s.hand.filter((w) => w !== word);
   const next = { ...s, hand, firstTry: false };
   if (r.kind === 'gate') {
-    return { state: next, effects: [{ t: 'dropCard', word }, pose('surprised'), say(wordLine('give', r.word)), pose('happy')] };
+    return { state: next, effects: [{ t: 'dropCard', word }, pose('surprised'), say(wordLine('book', r.word)), pose('happy')] };
   }
   const battery = s.battery - 1;
-  const joke: TripEffect = { t: 'joke', item: wordDef(word).answer };
+  const joke: TripEffect = { t: 'joke', item: null }; // null = the robot's wrong-card scene; fruit jokes stay for the cashier
   if (battery <= 0) return fallAsleep({ ...next, battery: 0 }, [joke, { t: 'battery', left: 0 }]);
   return {
     state: { ...next, battery },
@@ -372,17 +374,20 @@ function enterCashier(s: TripState): Result {
     effects.push(bubble(item), { t: 'cashierLook' }, { t: 'wait', ms: TUNING.suspenseMs });
     if (!fresh) {
       gears += TUNING.trip.gearsPerItem;
-      effects.push(say(wordLine('ok', word)), { t: 'gears', n: TUNING.trip.gearsPerItem });
+      effects.push(say(wordLine('ok', word)), pose('happy'), { t: 'gears', n: TUNING.trip.gearsPerItem });
     } else if (item === wordDef(word).answer) {
       newWord = word;
       learned = true;
       brain = confirm(brain, word);
       gears += TUNING.trip.gearsNewWord;
-      effects.push(say(wordLine('ok', word)), { t: 'celebrate', size: 'big' }, { t: 'gears', n: TUNING.trip.gearsNewWord });
+      effects.push(say(wordLine('ok', word)), pose('happy'), { t: 'celebrate', size: 'big' }, { t: 'gears', n: TUNING.trip.gearsNewWord });
     } else {
       newWord = word;
       brain = refute(brain, word, item);
-      effects.push({ t: 'joke', item }, say(oopsLine(word, item)), { t: 'reveal', item: wordDef(word).answer }, say(wordLine('this', word)));
+      effects.push(
+        { t: 'joke', item }, pose('surprised'), say(oopsLine(word, item)), { t: 'reveal', item: wordDef(word).answer },
+        say(wordLine('this', word)), pose('happy'),
+      );
     }
     effects.push(bubble(null));
   }

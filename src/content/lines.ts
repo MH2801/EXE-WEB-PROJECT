@@ -58,14 +58,15 @@ const DAY1_LINES = {
   'robot.hee': { speaker: 'robot', en: 'Hee hee! Not this one!', vi: 'Hi hi! Không phải cái này!' },
 } as const satisfies Record<string, Line>;
 
-export type WordLineKey = 'ask' | 'yes' | 'no' | 'npc' | 'ok' | 'this' | 'give' | 'mem';
+export type WordLineKey = 'ask' | 'yes' | 'no' | 'npc' | 'ok' | 'this' | 'give' | 'mem' | 'book';
 type Colour = 'red' | 'yellow' | 'orange' | 'green';
 // npc.<fruit> already exists from Day 1, so only the colour words get a generated npc line.
 type GenId =
   | `${Exclude<WordLineKey, 'npc'>}.${WordId}`
   | `npc.${'red' | 'yellow' | 'green'}`
   | `oops.${FruitId}`
-  | `oopsc.${Colour}`;
+  | `oopsc.${Colour}`
+  | 'book.long';
 
 const NAME_VI: Record<WordId | 'orangeColour', string> = {
   apple: 'táo', banana: 'chuối', orange: 'cam', lemon: 'chanh', grape: 'nho',
@@ -88,17 +89,20 @@ function genWordLines(): Record<GenId, Line> {
     add(`ok.${id}`, 'cashier', `Yes! ${cap(phrase)}!`, `Đúng rồi! ${cap(viN)}!`);
     add(`this.${id}`, 'cashier', `This is ${phrase}!`, `Đây là ${viN}!`);
     add(`give.${id}`, 'robot', f ? `Give me ${phrase}!` : `Give me a ${id} one!`, f ? `Đưa tớ ${vi} nào!` : `Đưa tớ món ${viN} nào!`);
+    add(`book.${id}`, 'book', id, vi); // the book / gate reads the bare word
     add(`mem.${id}`, 'mimi', `${cap(f ? id : phrase)}! I remember!`, `${cap(viN)}! Tớ nhớ rồi!`);
     if (!f) add(`npc.${id}`, 'npc', `Can I have a ${id} one, please?`, `Cho tôi món ${viN} nhé?`);
     if (f) add(`oops.${id}`, 'cashier', `Oh! This is ${phrase}!`, `Ồ! Đây là ${vi}!`);
   }
+  add('book.long', 'book', 'long', 'dài'); // the other clue that is not a word; book.round is Day 1
   for (const c of ['red', 'yellow', 'orange', 'green'] as const) {
     add(`oopsc.${c}`, 'cashier', `Oh! This is ${c}!`, `Ồ! Đây là màu ${NAME_VI[c === 'orange' ? 'orangeColour' : c]}!`);
   }
   return out as Record<GenId, Line>;
 }
 
-export const LINES: typeof DAY1_LINES & Record<GenId, Line> = { ...DAY1_LINES, ...genWordLines() };
+// Day 1 lines win over generated ones with the same id (book.apple, book.red, book.round).
+export const LINES: typeof DAY1_LINES & Record<GenId, Line> = { ...genWordLines(), ...DAY1_LINES };
 
 export type LineId = keyof typeof LINES;
 
