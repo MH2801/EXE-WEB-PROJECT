@@ -7,3 +7,4 @@ playwright-report/
 .DS_Store
 # Storyboard is 64 MB; extracted assets are committed instead.
 docs/source/day-1-storyboard.pdf
+build/
