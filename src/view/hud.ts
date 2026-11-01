@@ -47,7 +47,7 @@ export class Hud {
         c.add(this.scene.add.graphics().fillStyle(L.swatch[w], 1).fillRoundedRect(-s60 / 2, -o.slot * 0.38, s60, o.slot * 0.46, 12).lineStyle(4, COLORS.indigo, 1).strokeRoundedRect(-s60 / 2, -o.slot * 0.38, s60, o.slot * 0.46, 12));
         c.add(text(this.scene, 0, o.slot * 0.3, w, o.font)); // the word too, so colour is never alone
       } else c.add(fitImage(this.scene.add.image(0, 0, `v2_item_${w}`), o.slot * 0.7));
-      if (s.state === 'filled') {
+      if (s.state === 'filled' && s.word !== null) { // the "?" slot stays "?": a tick before the cashier would praise a pick that may be wrong (GDD 9)
         const m = this.scene.add.graphics().fillStyle(0x3fae4a, 1).fillCircle(0, 0, o.mark / 2).lineStyle(5, COLORS.paper, 1).beginPath().moveTo(-8, 0).lineTo(-2, 7).lineTo(9, -7).strokePath();
         m.setPosition(o.slot / 2 - 6, -o.slot / 2 + 6);
         c.add(m);

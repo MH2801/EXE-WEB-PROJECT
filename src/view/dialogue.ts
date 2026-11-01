@@ -10,8 +10,9 @@ export class Dialogue {
   private en: Phaser.GameObjects.Text;
   private vi: Phaser.GameObjects.Text;
 
-  constructor(scene: Phaser.Scene) {
-    const { x, y, w, h, enPx } = TUNING.dialogue;
+  constructor(scene: Phaser.Scene, at: { x: number; y: number } = TUNING.dialogue) {
+    const { x, y } = at;
+    const { w, h, enPx } = TUNING.dialogue;
     const g = scene.add.graphics();
     g.fillStyle(0xe8f6ff, 0.96).fillRoundedRect(-w / 2, -h / 2, w, h, 36);
     g.lineStyle(8, 0x3aa8ff, 1).strokeRoundedRect(-w / 2, -h / 2, w, h, 36);

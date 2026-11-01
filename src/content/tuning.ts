@@ -168,6 +168,23 @@ export const TUNING = {
       swatch: { red: 0xe5484d, yellow: 0xffc83d, green: 0x3fae4a }, // colour cards and order slots
       depth: 40, // HUD and cards draw above the room
     },
+    // Trip scene (Task 9). All B, tune by eye; 1672x941 frame. mapMs, mapFast and mapStillMs are also in spec 14.
+    view: {
+      mapMs: 2600, // B, Mimi walks one map leg in this long
+      mapFast: 4, // B, a tap makes the rest of the walk this many times faster
+      mapStillMs: 700, // B, reduced motion: the map stays this long and Mimi does not walk
+      mimi: { x: 1400, y: 768, scale: 0.7 }, // B, right side in every room, so the dialogue box and her bubble never overlap
+      dialogue: { x: 760, y: 228 }, // B, box centre: below the order row, left of battery and gears, above doors and stalls (143-313)
+      map: { y: 700, x0: 260, x1: 1400, line: 10, node: 22 }, // B, path and its stops
+      floor: { y: 740, h: 201 }, // B, lighter strip under every room
+      door: { w: 300, h: 420, y: 740, safeX: 330, mysteryX: 880, glowW: 440, glowH: 560, glowAlpha: 0.35, badge: 56, icon: 110 }, // B, both doors the same size (GDD 6)
+      chest: { x: 880, y: 740, px: 360, bigPx: 520 }, // B
+      counter: { x: 880, y: 700, w: 640, h: 80, itemPx: 220, label: 48 }, // B, the stall where Mimi shows what she knows
+      teach: { xs: [300, 640, 980], y: 700, w: 300, h: 80, itemPx: 180 }, // B, three stalls of the "?" room
+      cashier: { x: 880, y: 740, px: 430, leanDeg: 6, leanPx: 14, leanMs: 160 }, // B, the robot leans toward Mimi and holds for suspenseMs
+      npc: { x: 880, y: 740, px: 420 }, // B, gate and robot until Task 10
+      bounce: { px: 24, ms: 120 }, // B, optional tap fun
+    },
   },
   markTag: { scale: 0.2, dy: 50, angle: 14, ms: 140, repeat: 3 }, // B, Mimi head on a rejected stall
 } as const;

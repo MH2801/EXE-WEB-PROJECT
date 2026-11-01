@@ -89,8 +89,7 @@ export class Home extends Phaser.Scene {
       lock.setAlpha(0.8);
       makeClayButton(this, second.x, second.y, { icon: 'home_book', w: second.w, h: second.h, variant: 'plain', ariaName: 'Word Book', onTap: () => this.leave(speaker, 'WordBook') });
     }
-    // shortcut: the Trip scene arrives in Task 9, so Go only gives press feedback; call this.leave(speaker, 'Trip') then.
-    makeClayButton(this, H.go.x, H.go.y, { label: LABELS.go, icon: 'home_play', w: H.go.w, h: H.go.h, variant: 'primary', ariaName: 'Go', onTap: () => undefined });
+    makeClayButton(this, H.go.x, H.go.y, { label: LABELS.go, icon: 'home_play', w: H.go.w, h: H.go.h, variant: 'primary', ariaName: 'Go', onTap: () => this.leave(speaker, 'Trip') });
     addRotateOverlay(this);
   }
 

@@ -6,6 +6,7 @@ import { Memory } from './scenes/Memory';
 import { Mission } from './scenes/Mission';
 import { Parent } from './scenes/Parent';
 import { Title } from './scenes/Title';
+import { Trip } from './scenes/Trip';
 import { WordBook } from './scenes/WordBook';
 
 const game = new Phaser.Game({
@@ -17,7 +18,7 @@ const game = new Phaser.Game({
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
-  scene: [Boot, Home, Title, Mission, Memory, Parent, WordBook],
+  scene: [Boot, Home, Title, Mission, Memory, Parent, WordBook, Trip],
 });
 
 if (import.meta.env.DEV) (window as unknown as { __game: Phaser.Game }).__game = game;
@@ -26,6 +27,8 @@ if (import.meta.env.VITE_E2E === '1') {
   // Test hook for tests/e2e: phase and on-screen click points. Not in normal builds.
   type Pt = { x: number; y: number };
   type MissionView = { state?: { phase: string }; stalls?: { center(f: string): Pt }; recallObjs?: (Pt & { texture?: { key: string } })[] };
+  type TripView = { state?: { phase: string }; rooms: { center(n: string): Pt | null }; cards: { center(w: string): Pt | null } };
+  const trip = () => game.scene.getScene('Trip') as unknown as TripView;
   const mission = () => game.scene.getScene('Mission') as unknown as MissionView;
   const screen = (g: Pt): Pt => {
     const r = game.canvas.getBoundingClientRect();
@@ -33,8 +36,15 @@ if (import.meta.env.VITE_E2E === '1') {
   };
   (window as unknown as { __dtd: unknown }).__dtd = {
     // Mission phase once begun (Memory scene = mission done: core stays at memory_reveal after goMemory); before that, the scene key.
-    phase: () => (game.scene.isActive('Memory') ? 'done' : mission().state?.phase) ?? game.scene.getScenes(true)[0]?.scene.key ?? 'none',
+    phase: () => game.scene.isActive('Trip') ? (trip().state?.phase ?? 'Trip') : (game.scene.isActive('Memory') ? 'done' : mission().state?.phase) ?? game.scene.getScenes(true)[0]?.scene.key ?? 'none',
     point(name: string): Pt | null {
+      if (name === 'go') return screen(TUNING.home.go);
+      if (game.scene.isActive('Trip')) {
+        if (name === 'yes') return screen(TUNING.yes);
+        if (name === 'no') return screen(TUNING.no);
+        const p = name.startsWith('card_') ? trip().cards.center(name.slice(5)) : trip().rooms.center(name);
+        return p ? screen(p) : null;
+      }
       if (name === 'start') return screen(TUNING.titleHits.start);
       if (name === 'yes') return screen(TUNING.yes);
       if (name === 'no') return screen(TUNING.no);

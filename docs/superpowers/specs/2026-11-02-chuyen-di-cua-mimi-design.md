@@ -257,6 +257,9 @@ Tất cả là giá trị khởi đầu (B), nằm trong `tuning.ts`. Cách ki�
 | `gearsNewWord` | 3 | Không ai chọn cửa "?" thì tăng |
 | `chestGears` | 1–2 | Theo cảm nhận |
 | `bigChestGears` | 3–4 | Theo cảm nhận |
+| `mapMs` | 2600 | Bản đồ chậm thì giảm |
+| `mapFast` | 4 | Chạm để đi nhanh mà vẫn thấy chậm thì tăng |
+| `mapStillMs` | 700 | Chỉ khi giảm chuyển động: bản đồ ở lại bao lâu |
 | `patternB` | R từ 3 | Vào mẫu B quá sớm thì tăng |
 | `patternC` | R từ 5 | Vào mẫu C quá sớm thì tăng |
 | `fontWaitMs` | 2000 | Chữ đổi font giữa chừng thì tăng; vào game thấy chậm thì giảm |
