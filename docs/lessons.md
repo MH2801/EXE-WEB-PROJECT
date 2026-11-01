@@ -16,3 +16,9 @@ Tìm trước khi viết để không tạo tài liệu trùng.
 
 ## Không ghi hạn và lịch theo ngày
 Founder làm một lượt khi rảnh. Plan và tài liệu xếp việc theo thứ tự phụ thuộc, không ghi ngày và không chia việc theo ngày.
+
+## Qua hết tiêu chí nghiệm thu không có nghĩa là vui
+MVP đạt spec §12 nhưng founder chơi thử thấy chán. Trước khi báo xong một phần có lối chơi, phải chấm core loop bằng `game-design`, `experience-design` và `motivation-design`, và nói thẳng kết quả.
+
+## Đừng dùng tuổi thật để biện hộ cho nhịp chậm
+Founder sửa: trẻ hiện đại quen YouTube và Roblox, và *Level Up!* khuyên nhắm trên tuổi thật 3–5 năm. Trình bày, nhịp và độ hài theo tuổi cộng thêm. Chỉ nội dung học và giới hạn đọc giữ ở trình độ thật của bé.

@@ -22,7 +22,11 @@
 | State, next steps, blockers | `docs/HANDOFF.md` |
 | Product, pillars, backlog | `docs/product/vision.md` |
 | How to design a feature | `docs/product/experience-framework.md` |
-| MVP design | `docs/superpowers/specs/2026-11-01-day-1-apple-mvp-design.md` |
+| Current game spec (§ numbers below mean this file) | `docs/superpowers/specs/2026-11-02-chuyen-di-cua-mimi-design.md` |
+| Why the game is designed this way: genres, MDA, psychology, game feel | `docs/product/game-design-document.md` (must read §0 and §2 before gameplay code, then the sections a task cites) |
+| English content | `docs/product/content-design.md` |
+| UI/UX rules | `docs/product/ui-ux-direction.md` |
+| Day 1 draft spec (history only) | `docs/superpowers/specs/2026-11-01-day-1-apple-mvp-design.md` |
 | Plans | `docs/superpowers/plans/` |
 | Why a choice was made | `docs/decisions/NNNN-*.md` |
 | Asset licences | `docs/assets/CREDITS.md` (row first, then add the asset) |
@@ -48,7 +52,8 @@ When dispatching with the Agent tool, use this table. The model and effort are s
 |---|---|---|---|
 | Scaffold, config, asset extraction script, docs | haiku | low | Own checks only |
 | Content tables, save, report, overlays, plain UI | sonnet | medium | Own tests only |
-| `core/mission.ts` and its tests | sonnet | high | One opus reviewer: state machine is the core |
+| `core/mission.ts`, `core/trip.ts`, `core/tripgen.ts` and tests | sonnet | high | One opus reviewer: state machine is the core |
+| Character and world art (SVG) | opus | high | Founder look at one montage |
 | Phaser scenes, effects runner, audio, timers, lifecycle | sonnet | high | One sonnet reviewer: async and hang paths |
 | Mimi reactions, jokes, pacing, game feel | opus | high | Founder play check |
 | Whole-branch review before merge | opus | high | `/ponytail-review` first, then one review |

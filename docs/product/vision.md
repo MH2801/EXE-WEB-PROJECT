@@ -24,6 +24,8 @@ Khi truyền thông về MVP, nói "dạy bạn robot Mimi", không nói sản p
 
 Vòng lặp lâu dài: Discover (tò mò, thế giới gợi, phụ huynh gợi) → Understand → Teach Mimi → Mimi learns → Progress. Learn là hệ gợi ý, Memory là kho kiến thức, AI Room là nơi lưu những gì Mimi đã trải qua.
 
+Lối chơi từ Day 2 trở đi: [game-vision.md](game-vision.md).
+
 ## Backlog sau MVP
 Mỗi mục cần spec riêng.
 - Hai mức ghi nhớ, từ có nhiều đặc tính, "từ mạnh".
@@ -36,3 +38,4 @@ Mỗi mục cần spec riêng.
 - Ghi âm sẵn các câu chính (mẹ, Mimi, hướng dẫn) cho bé chưa biết đọc, vì chỉ dùng giọng có sẵn trên máy (ADR 0002). Máy không có giọng sẽ im lặng.
 - Từ không chỉ tay được như "sweet": khám phá qua nếm thử và phản ứng của NPC.
 - Kiểm tra ở nhiệm vụ sau rằng cả bé và Mimi đều nhớ từ cũ mà không có bước loại trừ.
+- Thiết kế lại toàn bộ UI/UX, hình và thế giới, thay các placeholder hiện tại (founder yêu cầu, làm sau khi chốt lối chơi).
