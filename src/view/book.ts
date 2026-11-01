@@ -28,12 +28,13 @@ export class MissionBook {
     this.icon = makeButton(scene, x, y, { label: '', w: s, h: s, onTap: () => this.show() }).setDepth(300);
     this.halo = scene.add.graphics().lineStyle(12, 0xffd23f, 1).strokeCircle(0, 0, s * 0.72).setVisible(false);
     this.art = scene.add.graphics();
-    this.art.fillStyle(0xe8884a, 1).fillRoundedRect(-s * 0.4, -s * 0.4, s * 0.8, s * 0.8, 18);
+    const ic = TUNING.book.icon;
+    this.art.fillStyle(0xe8884a, 1).fillRoundedRect(-s * ic.cover / 2, -s * ic.cover / 2, s * ic.cover, s * ic.cover, ic.coverR);
     // An open book: two white pages with text lines and a blue spine on the orange cover.
-    this.art.fillStyle(0xffffff, 1).fillRoundedRect(-s * 0.35, -s * 0.28, s * 0.33, s * 0.56, 8).fillRoundedRect(s * 0.02, -s * 0.28, s * 0.33, s * 0.56, 8);
-    this.art.fillStyle(0x3aa8ff, 1).fillRect(-s * 0.02, -s * 0.34, s * 0.04, s * 0.68);
-    this.art.lineStyle(5, 0x9cc8e8, 1);
-    for (const ly of [-0.14, 0, 0.14]) this.art.lineBetween(-s * 0.3, s * ly, -s * 0.07, s * ly).lineBetween(s * 0.07, s * ly, s * 0.3, s * ly);
+    this.art.fillStyle(0xffffff, 1).fillRoundedRect(-s * ic.page.x, -s * ic.page.y, s * ic.page.w, s * ic.page.h, ic.page.r).fillRoundedRect(s * 0.02, -s * ic.page.y, s * ic.page.w, s * ic.page.h, ic.page.r);
+    this.art.fillStyle(0x3aa8ff, 1).fillRect(-s * ic.spine.w / 2, -s * ic.spine.h / 2, s * ic.spine.w, s * ic.spine.h);
+    this.art.lineStyle(ic.line, 0x9cc8e8, 1);
+    for (const ly of ic.lineRows) this.art.lineBetween(-s * 0.3, s * ly, -s * 0.07, s * ly).lineBetween(s * 0.07, s * ly, s * 0.3, s * ly);
     this.icon.addAt(this.halo, 0).addAt(this.art, 1);
 
     const veil = scene.add.rectangle(TUNING.gameW / 2, TUNING.gameH / 2, TUNING.gameW, TUNING.gameH, 0x16324f, 0.45).setDepth(398).setInteractive();

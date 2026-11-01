@@ -33,5 +33,6 @@ Mỗi mục cần spec riêng.
 - Event thử thách như Day 7. Khi thua không mất kiến thức và không phải chờ theo giờ thật.
 - AI Room có trang trí, nhập giọng nói, Mimi trò chuyện bằng AI thật.
 - Tài khoản, lưu đám mây, thanh toán.
+- Ghi âm sẵn các câu chính (mẹ, Mimi, hướng dẫn) cho bé chưa biết đọc, vì chỉ dùng giọng có sẵn trên máy (ADR 0002). Máy không có giọng sẽ im lặng.
 - Từ không chỉ tay được như "sweet": khám phá qua nếm thử và phản ứng của NPC.
 - Kiểm tra ở nhiệm vụ sau rằng cả bé và Mimi đều nhớ từ cũ mà không có bước loại trừ.

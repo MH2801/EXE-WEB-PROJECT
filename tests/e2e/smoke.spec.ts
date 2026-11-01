@@ -115,3 +115,25 @@ test('double-click Yes counts once', async ({ browser }) => {
   expect(saves[0]).not.toBe('null');
   expect(JSON.parse(saves[1]!)).toEqual(JSON.parse(saves[0]!));
 });
+
+for (const fruit of ['lemon', 'banana', 'grape', 'orange']) {
+  for (const motion of ['no-preference', 'reduce'] as const) {
+    test(`wrong fruit ${fruit} (${motion}) plays the joke and returns to choosing`, async ({ browser }) => {
+      const ctx = await browser.newContext({ reducedMotion: motion, viewport: { width: 1280, height: 720 } });
+      const page = await ctx.newPage();
+      const errors = await open(page);
+      await click(page, 'start');
+      await waitFor(async () => (await phase(page)) === 'choosing', () => skip(page));
+      await click(page, `stall_${fruit}`);
+      await waitFor(async () => (await phase(page)) === 'asking', () => skip(page));
+      await waitFor(async () => (await phase(page)) !== 'asking', async () => {
+        const p = (await point(page, 'yes'))!;
+        await page.mouse.click(p.x, p.y);
+        await page.waitForTimeout(300);
+      });
+      await waitFor(async () => (await phase(page)) === 'choosing', () => skip(page));
+      expect(errors).toEqual([]);
+      await ctx.close();
+    });
+  }
+}

@@ -8,7 +8,7 @@ import { reducedMotion } from './ui';
 /** Stars flying out of (x, y) and fading. Fire and forget: each star destroys itself. */
 export function burst(scene: Phaser.Scene, x: number, y: number, n: number, color: number, inner: number, outer: number, rx: number, ry: number, ms: number): void {
   for (let i = 0; i < n; i++) {
-    const star = scene.add.star(x, y, 5, inner, outer, color).setDepth(70);
+    const star = scene.add.star(x, y, TUNING.burst.points, inner, outer, color).setDepth(TUNING.burst.depth);
     const a = (i / n) * Math.PI * 2;
     scene.tweens.add({ targets: star, x: x + Math.cos(a) * rx, y: y + Math.sin(a) * ry, alpha: 0, duration: ms, onComplete: () => star.destroy() });
   }
@@ -66,9 +66,10 @@ const SCENES: Record<WrongFruit, (c: Ctx) => Promise<void>> = {
   grape: async ({ scene, mimi, home, tw, add }) => {
     const g = TUNING.jokes.grape;
     const from = heldPos(mimi);
+    mimi.held?.setVisible(false);
     const grapes: Phaser.GameObjects.Image[] = [];
     for (let i = 0; i < g.count; i++) {
-      const img = add(scene.add.image(from.x, from.y, 'fruit_grape').setScale(g.scale).setDepth(55));
+      const img = add(scene.add.image(from.x, from.y, 'fruit_grape').setScale(g.scale).setDepth(TUNING.burst.itemDepth));
       grapes.push(img);
       const delay = i * g.staggerMs;
       scene.tweens.add({ targets: img, x: home.x + (i / (g.count - 1) - 0.5) * g.spreadX, duration: g.fallMs, delay });
@@ -83,7 +84,7 @@ const SCENES: Record<WrongFruit, (c: Ctx) => Promise<void>> = {
     const o = TUNING.jokes.orange;
     const from = heldPos(mimi);
     mimi.held?.setVisible(false);
-    const ball = add(scene.add.image(from.x, from.y, 'fruit_orange').setScale(o.scale).setDepth(55));
+    const ball = add(scene.add.image(from.x, from.y, 'fruit_orange').setScale(o.scale).setDepth(TUNING.burst.itemDepth));
     const floor = home.y - ball.displayHeight / 2;
     await tw({ targets: ball, y: floor, duration: o.dropMs, ease: 'Bounce.Out' });
     playSfx('pop');
@@ -120,7 +121,6 @@ export function playJoke(scene: Phaser.Scene, mimi: Mimi, fruit: WrongFruit): Pr
   };
   mimi.pose('surprised');
   const still = reducedMotion(); // reduced motion: still poses and the sound only
-  if (still) playSfx('boing');
   const scenePlay = still ? ctx.wait(j.stillMs) : SCENES[fruit](ctx);
   return new Promise<void>((resolve) => {
     const ev = scene.time.delayedCall(j.maxMs, () => end());
@@ -134,6 +134,7 @@ export function playJoke(scene: Phaser.Scene, mimi: Mimi, fruit: WrongFruit): Pr
       mimi.body.setOrigin(0.5, 1).setPosition(0, 0).setAngle(0).setScale(1).clearTint();
       mimi.held?.setVisible(true);
       mimi.pose('happy'); // never a sad end pose (spec 9)
+      playSfx('sparkle'); // every joke closes happy, so no sound means "wrong" (spec 9)
       resolve();
     }
     scenePlay.then(end, end);

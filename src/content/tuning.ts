@@ -25,7 +25,7 @@ export const TUNING = {
   hopMs: 180, // B
   bobPx: 6, // B
   bobMs: 260, // B
-  dialogue: { x: 836, y: 862, w: 1300, h: 140 }, // B, centre of the box; its top (792) stays below feetY
+  dialogue: { x: 836, y: 855, w: 1300, h: 170, enPx: 56, enWrapPx: 40 }, // B, centre of the box; its top (770) stays below feetY; enWrapPx = English size when it needs two lines
   titleHits: {
     start: { x: 1006, y: 722, w: 640, h: 190 },
     learn: { x: 1530, y: 325, w: 260, h: 130 },
@@ -35,9 +35,9 @@ export const TUNING = {
   }, // B, drawn over bg_title's painted buttons
   // Mission view (Task 8). All B, tune by eye; positions are in the 1672x941 logic frame.
   mimiScale: 0.72, // B, layout.json draws Mimi 381 px tall, the art is 527
-  feetY: 790, // B, where Mimi's feet stand: just above the dialogue box so a line never hides them
-  momSpot: { x: 1000, y: 790 }, // B, right of mom (layout mom x 550, w 545)
-  fruitSpot: { x: 836, y: 790 }, // B, y = feetY
+  feetY: 768, // B, where Mimi's feet stand: just above the dialogue box so a line never hides them
+  momSpot: { x: 1000, y: 768 }, // B, right of mom (layout mom x 550, w 545)
+  fruitSpot: { x: 836, y: 768 }, // B, y = feetY
   offscreenPad: 200, // B, Mimi enters from this far outside the frame
   lift: { x: 836, y: 300, scale: 3, ms: 350 }, // B, the fruit Mimi looks at
   yes: { x: 560, y: 620 }, // B, fixed (spec 9)
@@ -54,7 +54,8 @@ export const TUNING = {
   celebrateMs: 900, // B, star burst flight
   momNodMs: 400, // B, mom leans in (half) and back (half); she holds the lean through suspenseMs
   recall: { y: 470, gap: 386, scale: 2.6, card: 300 }, // B, three big fruits (spec 7)
-  book: { x: 110, y: 130, size: 140, panelX: 836, panelY: 400, panelW: 960, panelH: 520, cell: 240, closeSize: 130 }, // B
+  book: { x: 110, y: 130, size: 140, panelX: 836, panelY: 400, panelW: 960, panelH: 520, cell: 240, closeSize: 130, icon: { cover: 0.8, coverR: 18, page: { x: 0.35, y: 0.28, w: 0.33, h: 0.56, r: 8 }, spine: { w: 0.04, h: 0.68 }, line: 5, lineRows: [-0.14, 0, 0.14] } }, // B
+  burst: { points: 5, depth: 70, itemDepth: 55 }, // B, star shape and draw order of joke effects
   pulseMs: 700, // B, book icon pulse
   pulseScale: 1.12, // B
   headDy: 200, // B, height above Mimi's feet for a fruit she shows and for the star burst

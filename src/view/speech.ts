@@ -13,7 +13,8 @@ export type SpeechDeps = {
 export const lineDeadlineMs = (text: string): number => TUNING.speechBaseMs + text.length * TUNING.speechPerCharMs;
 
 function pickVoice(synth: NonNullable<SpeechDeps['synth']>): SpeechSynthesisVoice | undefined {
-  const en = synth.getVoices().filter((v) => /^en/i.test(v.lang));
+  // Local voices only: a network voice would send the line text off the device (spec 9, ADR 0002).
+  const en = synth.getVoices().filter((v) => /^en/i.test(v.lang) && v.localService);
   return en.find((v) => v.lang.replace('_', '-').toLowerCase() === 'en-us') ?? en[0];
 }
 
@@ -56,8 +57,9 @@ export function createSpeaker(deps: SpeechDeps) {
         try {
           const u = deps.makeUtterance(en);
           const voice = pickVoice(synth);
-          u.lang = 'en-US'; // so an empty voice list never reads English with a Vietnamese default
-          if (voice) u.voice = voice;
+          if (!voice) return; // no local voice: play by text and pictures, the deadline ends the line
+          u.lang = 'en-US';
+          u.voice = voice;
           u.pitch = TUNING.pitch[speaker];
           u.rate = TUNING.speechRate;
           u.onend = end;

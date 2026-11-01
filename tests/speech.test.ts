@@ -5,7 +5,7 @@ import { TUNING } from '../src/content/tuning';
 
 vi.mock('../src/content/audio-manifest', () => ({ RECORDED: ['mom.ask'] }));
 
-function setup(opts: { synth?: boolean; voices?: { lang: string }[]; fileFails?: boolean; fileDone?: boolean; stopThrows?: boolean } = {}) {
+function setup(opts: { synth?: boolean; voices?: { lang: string; localService?: boolean }[]; fileFails?: boolean; fileDone?: boolean; stopThrows?: boolean } = {}) {
   const timers: { ms: number; fn: () => void; live: boolean }[] = [];
   const utterances: Record<string, unknown>[] = [];
   const synth = {
@@ -13,7 +13,7 @@ function setup(opts: { synth?: boolean; voices?: { lang: string }[]; fileFails?:
     cancel: vi.fn(),
     pause: vi.fn(),
     resume: vi.fn(),
-    getVoices: vi.fn(() => (opts.voices ?? []) as SpeechSynthesisVoice[]),
+    getVoices: vi.fn(() => (opts.voices ?? [{ lang: 'en-US', localService: true }]) as SpeechSynthesisVoice[]),
   };
   const stop = vi.fn(() => {
     if (opts.stopThrows) throw new Error('stop');
@@ -171,19 +171,19 @@ describe('speech', () => {
   });
 
   it('picks an English voice and the speaker pitch', () => {
-    const f = setup({ voices: [{ lang: 'fr-FR' }, { lang: 'en-GB' }, { lang: 'en-US' }] });
+    const f = setup({ voices: [{ lang: 'fr-FR', localService: true }, { lang: 'en-GB', localService: true }, { lang: 'en-US', localService: true }] });
     void f.speaker.say(SYNTH_ID);
     const u = f.utterances[0]!;
-    expect(u.voice).toEqual({ lang: 'en-US' });
+    expect(u.voice).toEqual({ lang: 'en-US', localService: true });
     expect(u.pitch).toBe(TUNING.pitch.mimi);
     expect(u.rate).toBe(TUNING.speechRate);
-    const g = setup({ voices: [{ lang: 'fr-FR' }, { lang: 'en-GB' }] });
+    const g = setup({ voices: [{ lang: 'fr-FR', localService: true }, { lang: 'en-GB', localService: true }] });
     void g.speaker.say('mom.thanks');
-    expect(g.utterances[0]!.voice).toEqual({ lang: 'en-GB' });
+    expect(g.utterances[0]!.voice).toEqual({ lang: 'en-GB', localService: true });
     expect(g.utterances[0]!.pitch).toBe(TUNING.pitch.mom);
-    const h = setup({ voices: [{ lang: 'fr-FR' }] });
+    const h = setup({ voices: [{ lang: 'fr-FR', localService: true }] });
     void h.speaker.say(SYNTH_ID);
-    expect(h.utterances[0]!.voice).toBeUndefined();
+    expect(h.synth.speak).not.toHaveBeenCalled(); // no English local voice
   });
 
   it('recorded file that finishes resolves the line', async () => {
@@ -215,9 +215,26 @@ describe('speech', () => {
     expect(await settled(p2)).toBe(false);
   });
 
-  it('always sets lang en-US even with no voices', () => {
+  it('always sets lang en-US', () => {
     const f = setup();
     void f.speaker.say(SYNTH_ID);
     expect(f.utterances[0]!.lang).toBe('en-US');
+  });
+
+  it('network-only voices: never speaks, the line still ends on its deadline', async () => {
+    const t = setup({ voices: [{ lang: 'en-US', localService: false }] });
+    const p = t.speaker.say(SYNTH_ID);
+    expect(t.synth.speak).not.toHaveBeenCalled();
+    expect(await settled(p)).toBe(false);
+    t.fire();
+    expect(await settled(p)).toBe(true);
+  });
+
+  it('prefers a local voice over a network one', () => {
+    const net = { lang: 'en-US', localService: false };
+    const local = { lang: 'en-GB', localService: true };
+    const t = setup({ voices: [net, local] });
+    void t.speaker.say(SYNTH_ID);
+    expect(t.utterances[0]!.voice).toBe(local);
   });
 });
