@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { SAVE_KEY, defaultSave, loadSave, writeSave, clearSave, type Store } from '../src/core/save';
+import { SAVE_KEY, browserStore, defaultSave, loadSave, writeSave, clearSave, type Store } from '../src/core/save';
 
 function memStore(): Store & { m: Map<string, string> } {
   const m = new Map<string, string>();
@@ -75,5 +75,21 @@ describe('save', () => {
     writeSave(s, defaultSave());
     clearSave(s);
     expect(s.m.has(SAVE_KEY)).toBe(false);
+  });
+});
+
+describe('browserStore', () => {
+  it('keeps the save in memory when localStorage is blocked (spec 11)', () => {
+    const had = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+    Object.defineProperty(globalThis, 'localStorage', { configurable: true, get: () => { throw new Error('blocked'); } });
+    try {
+      browserStore().setItem('k', 'v');
+      expect(browserStore().getItem('k')).toBe('v');
+      browserStore().removeItem('k');
+      expect(browserStore().getItem('k')).toBeNull();
+    } finally {
+      if (had) Object.defineProperty(globalThis, 'localStorage', had);
+      else delete (globalThis as { localStorage?: unknown }).localStorage;
+    }
   });
 });

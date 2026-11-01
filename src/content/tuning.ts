@@ -185,7 +185,7 @@ export const TUNING = {
         xs: [560, 820, 1080], y: 700, w: 230, h: 80, itemPx: 170, // B, three stalls of the "?" room
         ask: { y: 860, gap: 400, w: 300, h: 140, glyph: 70 }, // B, Yes and No: same size, same style, centred at the bottom
         // The book opens on the right: the word on top, its clues below. Tap any part to hear it.
-        book: { x: 1440, y: 550, w: 400, h: 440, fill: 0xf4fbff, wordY: -150, wordW: 340, wordH: 110, wordPx: 64, clueY: 50, clueDx: 95, tile: 170, clue: 100, openDx: 420, openMs: 320, pulse: 1.06, pulseMs: 140 }, // B
+        book: { x: 1440, y: 550, w: 400, h: 440, fill: 0xf4fbff, wordY: -150, wordW: 340, wordH: 120, wordPx: 64, clueY: 50, clueDx: 95, tile: 170, clue: 100, openDx: 420, openMs: 320, pulse: 1.06, pulseMs: 140 }, // B
       },
       cashier: { x: 1100, y: 740, px: 430, leanDeg: 6, leanPx: 14, leanMs: 160 }, // B, the robot leans toward Mimi and holds for suspenseMs
       npc: { x: 1100, y: 740, px: 420 }, // B, gate and robot

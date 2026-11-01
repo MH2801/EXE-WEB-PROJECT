@@ -74,10 +74,18 @@ export function clearSave(store: Store | null): void {
   }
 }
 
-export function browserStore(): Store | null {
+const memory = new Map<string, string>();
+const memoryStore: Store = {
+  getItem: (k) => memory.get(k) ?? null,
+  setItem: (k, v) => void memory.set(k, v),
+  removeItem: (k) => void memory.delete(k),
+};
+
+/** No localStorage: the game runs in memory until the tab closes (spec 11). */
+export function browserStore(): Store {
   try {
-    return localStorage;
+    return localStorage ?? memoryStore;
   } catch {
-    return null;
+    return memoryStore;
   }
 }

@@ -45,7 +45,7 @@ export class RoomView {
   constructor(
     private scene: Phaser.Scene,
     private onEvent: (e: TripEvent) => void,
-    private onAgain: (word: WordId) => void = () => undefined,
+    private onAgain: (word: WordId) => void,
   ) {}
 
   show(room: Shown): void {
