@@ -1,20 +1,24 @@
 import Phaser from 'phaser';
-import { LINES } from '../content/lines';
+import { LINES, wordLine } from '../content/lines';
 import { TUNING } from '../content/tuning';
 import { browserStore } from '../core/save';
 import { applyTrip, AUTO_PHASES, startTrip, step, type TripEffect, type TripEvent, type TripState } from '../core/trip';
 import { loadTripSave, writeTripSave, type TripSave } from '../core/tripSave';
+import type { WordId } from '../core/types';
 import { Mimi } from '../view/actors';
 import { Bubble } from '../view/bubble';
 import { Cards } from '../view/cards';
 import { Dialogue } from '../view/dialogue';
 import { Hud } from '../view/hud';
+import { burst, playJoke } from '../view/jokes';
 import { RoomView } from '../view/rooms';
 import { runEffects, type Handlers } from '../view/runner';
-import { COLORS, CSS } from '../view/theme';
-import { addRotateOverlay, makeSpeaker, reducedMotion } from '../view/ui';
+import { playSfx } from '../view/sfx';
+import { COLORS, CSS, FONT_DISPLAY } from '../view/theme';
+import { addRotateOverlay, fitImage, makeSpeaker, reducedMotion } from '../view/ui';
 
 const V = TUNING.trip.view;
+const L = TUNING.trip.layout;
 const noop = (): void => undefined;
 
 /** `?seed=` (an unsigned integer) makes a trip repeatable; otherwise the clock picks one. core/ never reads the clock. */
@@ -43,6 +47,7 @@ export class Trip extends Phaser.Scene {
   private mapBg!: Phaser.GameObjects.Image;
   private mapPath!: Phaser.GameObjects.Graphics;
   private idleEv: Phaser.Time.TimerEvent | null = null;
+  private revealImg: Phaser.GameObjects.Image | null = null;
 
   constructor() {
     super('Trip');
@@ -53,6 +58,7 @@ export class Trip extends Phaser.Scene {
     this.busy = this.fresh = this.left = this.tabHidden = this.mapping = this.fast = false;
     this.batch = 0;
     this.idleEv = null;
+    this.revealImg = null;
     this.state = undefined;
 
     const { gameW, gameH } = TUNING;
@@ -61,7 +67,7 @@ export class Trip extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(CSS.indigo);
     this.mapBg = this.add.image(gameW / 2, gameH / 2, 'v2_dusk').setDepth(0).setVisible(false);
     this.mapPath = this.add.graphics().setDepth(5).setVisible(false);
-    this.rooms = new RoomView(this, (e) => this.dispatch(e));
+    this.rooms = new RoomView(this, (e) => this.dispatch(e), (w) => this.listenAgain(w));
     this.hud = new Hud(this);
     this.mimi = new Mimi(this, V.mimi.x, V.mimi.y, 'v2_mimi');
     this.mimi.go.setScale(V.mimi.scale).setDepth(30);
@@ -177,6 +183,48 @@ export class Trip extends Phaser.Scene {
     return new Promise<void>((res) => this.time.delayedCall(ms, res));
   }
 
+  /** A tween that can never hold the runner: it resolves on completion, on stop, or at its deadline. Reduced motion jumps to the end. */
+  private tw(cfg: Phaser.Types.Tweens.TweenBuilderConfig): Promise<void> {
+    const ms = reducedMotion() ? 1 : (cfg.duration as number);
+    const total = ms * (cfg.yoyo ? 2 : 1) * (((cfg.repeat as number | undefined) ?? 0) + 1) + ((cfg.delay as number | undefined) ?? 0);
+    const p = new Promise<void>((res) => void this.tweens.add({ ...cfg, duration: ms, onComplete: () => res(), onStop: () => res() }));
+    return this.until(p, total + TUNING.fallbackPadMs);
+  }
+
+  /** Mimi hops in place; she always lands back where she was. */
+  private async hop(px: number, ms: number, repeat: number): Promise<void> {
+    const y = this.mimi.go.y;
+    try {
+      await this.tw({ targets: this.mimi.go, y: y - px, duration: ms, yoyo: true, repeat });
+    } finally {
+      this.tweens.killTweensOf(this.mimi.go);
+      this.mimi.go.y = y;
+    }
+  }
+
+  private clearReveal(): void {
+    if (this.revealImg) this.tweens.killTweensOf(this.revealImg);
+    this.revealImg?.destroy();
+    this.revealImg = null;
+  }
+
+  /** The gate button: the same path as any line, so busy, dialogue and skip all apply. No core event. */
+  private listenAgain(word: WordId): void {
+    if (this.left || this.busy || this.state?.phase !== 'gate') return;
+    void this.run([{ t: 'say', line: wordLine('book', word) }]);
+  }
+
+  private async sayLine(line: Parameters<Dialogue['show']>[0]): Promise<void> {
+    this.dialogue.show(line, this.save.viSubtitles);
+    if (LINES[line].speaker === 'mimi') this.mimi.bobWhileTalking(true);
+    try {
+      await this.speaker.say(line); // has its own deadline
+    } finally {
+      this.mimi.bobWhileTalking(false);
+      this.dialogue.hide();
+    }
+  }
+
   private nodeX(i: number): number {
     const n = this.state!.trip.rooms.length;
     return V.map.x0 + (i * (V.map.x1 - V.map.x0)) / Math.max(1, n - 1);
@@ -223,30 +271,36 @@ export class Trip extends Phaser.Scene {
   // ------------------------------------------------------------ effects
 
   private handlers: Handlers<TripEffect> = this.guarded({
-    say: async (e) => {
-      this.dialogue.show(e.line, this.save.viSubtitles);
-      if (LINES[e.line].speaker === 'mimi') this.mimi.bobWhileTalking(true);
-      try {
-        await this.speaker.say(e.line); // has its own deadline
-      } finally {
-        this.mimi.bobWhileTalking(false);
-        this.dialogue.hide();
-      }
-    },
+    say: (e) => this.sayLine(e.line),
     pose: (e) => this.mimi.pose(e.pose),
-    bubble: (e) => this.bubble.set(e.show),
+    bubble: (e) => {
+      this.clearReveal();
+      this.bubble.set(e.show);
+    },
     map: (e) => {
       this.rooms.hide();
+      this.cards.clear();
+      this.clearReveal();
       this.mapBg.setVisible(true);
       this.drawMap(e.at);
       return this.walkLeg(e.at);
     },
-    room: (e) => {
+    room: async (e) => {
+      this.clearReveal();
       this.mapBg.setVisible(false);
       this.mapPath.setVisible(false);
+      this.cards.clear();
       this.rooms.show(e.room);
-      this.mimi.go.setPosition(V.mimi.x, V.mimi.y);
-      this.mimi.body.setFlipX(true); // faces the room
+      this.mimi.body.setFlipX(false); // the challenge is to her right
+      const m = V.mimi;
+      if (reducedMotion()) return void this.mimi.go.setPosition(m.x, m.y);
+      // She walks in from the left, so the end of the map walk leads into the room.
+      this.mimi.go.setPosition(-TUNING.offscreenPad, m.y);
+      const ms = ((m.x + TUNING.offscreenPad) / (TUNING.mimiPxPerSec * V.enterSpeed)) * 1000;
+      await this.until(this.mimi.walkTo(m.x, m.y, V.enterSpeed), ms + TUNING.fallbackPadMs);
+      this.tweens.killTweensOf(this.mimi.go);
+      this.mimi.go.setPosition(m.x, m.y);
+      this.mimi.body.y = 0;
     },
     order: (e) => this.hud.setOrder(e.slots),
     battery: (e) => this.hud.setBattery(e.left),
@@ -261,20 +315,107 @@ export class Trip extends Phaser.Scene {
       writeTripSave(browserStore(), applyTrip(this.save, this.state!));
       this.scene.start('Home', { summary: e.summary });
     },
-    // Task 10 fills these.
-    dropCard: noop,
-    joke: noop,
-    collect: noop,
-    chest: noop,
-    reveal: noop,
-    sleep: noop,
-    celebrate: noop,
-    hand: noop,
-    stalls: noop,
-    ask: noop,
-    markStall: noop,
-    book: noop,
-    helper: noop,
+    hand: (e) =>
+      e.words.length
+        ? this.until(this.cards.deal(e.words), L.cards.enterMs + e.words.length * L.cards.staggerMs + TUNING.fallbackPadMs)
+        : this.cards.clear(),
+    stalls: (e) => this.rooms.setStalls(e.enabled),
+    ask: (e) => this.rooms.showAsk(e.show),
+    markStall: (e) => this.rooms.mark(e.item),
+    book: (e) => this.rooms.showBook(e.word),
+    dropCard: (e) => {
+      playSfx('boing');
+      return this.until(this.cards.drop(e.word), L.cards.upMs + L.cards.fadeMs + TUNING.fallbackPadMs);
+    },
+    // Fruit jokes are the cashier's; the robot's wrong card (null) and an apple get a basic boing hop.
+    joke: async (e) => {
+      if (e.item !== null && e.item !== 'apple') return playJoke(this, this.mimi, e.item); // has its own deadline
+      playSfx('boing');
+      await this.hop(V.fx.hop.px, V.fx.hop.ms, V.fx.hop.repeat);
+      this.mimi.pose('happy');
+    },
+    // The item leaves the thought bubble for the order row. Same path and sound for every item.
+    collect: async (e) => {
+      const c = V.fx.collect;
+      const img = fitImage(this.add.image(this.mimi.go.x + L.bubble.dx, this.mimi.go.y + L.bubble.dy, `v2_item_${e.item}`), c.px).setDepth(L.depth + 5);
+      playSfx('pop');
+      try {
+        await this.tw({ targets: img, x: c.to.x, y: c.to.y, alpha: 0, scale: img.scale * 0.5, duration: c.ms });
+      } finally {
+        img.destroy();
+      }
+    },
+    chest: async (e) => {
+      const c = V.fx.chest;
+      const at = this.rooms.center('chest') ?? { x: TUNING.gameW / 2, y: TUNING.gameH / 2 };
+      const t = this.add.text(at.x, at.y, `+${e.gears}`, { fontFamily: FONT_DISPLAY, fontStyle: '800', fontSize: `${c.font}px`, color: CSS.sun, stroke: CSS.indigo, strokeThickness: 10 }).setOrigin(0.5).setDepth(L.depth + 5);
+      playSfx('pop');
+      burst(this, at.x, at.y, c.stars, TUNING.celebrate.color, c.inner, c.outer, c.rx, c.ry, c.starMs);
+      try {
+        await this.tw({ targets: t, y: at.y - c.rise, duration: c.ms });
+        await this.wait(c.holdMs);
+      } finally {
+        t.destroy();
+      }
+    },
+    reveal: (e) => {
+      this.clearReveal();
+      const r = V.fx.reveal;
+      const img = fitImage(this.add.image(r.x, r.y, `v2_item_${e.item}`), r.px).setDepth(L.depth + 5);
+      this.revealImg = img;
+      playSfx('pop');
+      if (reducedMotion()) return;
+      const s = img.scale;
+      img.setScale(0);
+      this.tweens.add({ targets: img, scale: s, duration: r.popMs, ease: 'Back.easeOut' });
+    },
+    sleep: async () => {
+      const s = V.fx.sleep;
+      const cart = fitImage(this.add.image(-s.cartPx, s.y, 'v2_cart').setOrigin(0.5, 1), s.cartPx).setDepth(25);
+      const off = TUNING.gameW + s.cartPx;
+      try {
+        await this.tw({ targets: cart, x: this.mimi.go.x, duration: s.inMs });
+        await Promise.all([this.tw({ targets: cart, x: off, duration: s.outMs }), this.tw({ targets: this.mimi.go, x: off, duration: s.outMs })]);
+      } finally {
+        cart.destroy();
+      }
+    },
+    // A right item beats any joke: the big peak is the Day 1 burst plus fireworks; the small one is a little burst.
+    celebrate: async (e) => {
+      const { x, y } = this.mimi.go;
+      const hy = y - TUNING.headDy;
+      playSfx('sparkle');
+      if (e.size === 'small') {
+        const s = V.fx.small;
+        burst(this, x, hy, s.stars, TUNING.celebrate.color, s.inner, s.outer, s.rx, s.ry, s.ms);
+        return this.hop(s.hopPx, s.hopMs, 0);
+      }
+      const c = TUNING.celebrate;
+      const f = TUNING.fireworks;
+      burst(this, x, hy, c.stars, c.color, c.inner, c.outer, c.rx, c.ry, TUNING.celebrateMs);
+      for (const [dx, dy, color, delay] of f.shots) {
+        this.time.delayedCall(delay, () => {
+          if (this.left) return;
+          playSfx('sparkle');
+          burst(this, x + dx, hy + dy, f.sparks, color, f.r / 2, f.r, f.rx, f.ry, f.ms);
+        });
+      }
+      await this.hop(c.hopPx, c.hopMs, c.hopRepeat);
+      await this.wait(c.holdMs);
+    },
+    // The helper robot walks to the stall, says its line and walks back. No notice is shown.
+    helper: async (e) => {
+      const h = V.helper;
+      const img = fitImage(this.add.image(-h.px, h.y, 'v2_helper').setOrigin(0.5, 1), h.px).setDepth(h.depth);
+      try {
+        await this.tw({ targets: img, x: this.rooms.center(`stall_${e.item}`)?.x ?? TUNING.gameW / 2, duration: h.ms });
+        await this.sayLine(e.line);
+        img.setFlipX(true);
+        await this.tw({ targets: img, x: -h.px, duration: h.ms });
+      } finally {
+        img.destroy();
+      }
+    },
   });
 
   /** Once the scene has shut down, a line that was cut short must not let later effects touch dead objects. */

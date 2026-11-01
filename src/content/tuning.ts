@@ -165,7 +165,7 @@ export const TUNING = {
       gears: { right: 1632, y: 150, font: 48, icon: 22, bounce: 1.25, bounceMs: 140 }, // under the battery
       cards: { y: 810, w: 220, h: 250, gap: 40, thick: 12, pic: 110, swatch: 120, font: 40, enterDy: 300, enterMs: 320, staggerMs: 80, upPx: 70, upMs: 140, fadeMs: 200 }, // bottom row
       bubble: { dx: 190, dy: -440, w: 200, h: 170, pic: 100, font: 90, popMs: 160 }, // from Mimi's feet
-      swatch: { red: 0xe5484d, yellow: 0xffc83d, green: 0x3fae4a }, // colour cards and order slots
+      swatch: { red: 0xe5484d, yellow: 0xffc83d, green: 0x3fae4a, orange: 0xff8a2b }, // colour cards and order slots; orange is only the book clue
       depth: 40, // HUD and cards draw above the room
     },
     // Trip scene (Task 9). All B, tune by eye; 1672x941 frame. mapMs, mapFast and mapStillMs are also in spec 14.
@@ -173,16 +173,33 @@ export const TUNING = {
       mapMs: 2600, // B, Mimi walks one map leg in this long
       mapFast: 4, // B, a tap makes the rest of the walk this many times faster
       mapStillMs: 700, // B, reduced motion: the map stays this long and Mimi does not walk
-      mimi: { x: 1400, y: 768, scale: 0.7 }, // B, right side in every room, so the dialogue box and her bubble never overlap
-      dialogue: { x: 760, y: 228 }, // B, box centre: below the order row, left of battery and gears, above doors and stalls (143-313)
+      mimi: { x: 250, y: 768, scale: 0.7 }, // B, left in every room, the challenge is mid-right (ui-ux 4); the bubble then sits at about x 440
+      enterSpeed: 2, // B, Mimi walks into a room from the left at this multiple of the base speed
+      dialogue: { x: 1050, y: 228, w: 860 }, // B, box centre and width (x 620-1480, y 143-313): clear of her bubble, the gears and the order row
       map: { y: 700, x0: 260, x1: 1400, line: 10, node: 22 }, // B, path and its stops
       floor: { y: 740, h: 201 }, // B, lighter strip under every room
-      door: { w: 300, h: 420, y: 740, safeX: 330, mysteryX: 880, glowW: 440, glowH: 560, glowAlpha: 0.35, badge: 56, icon: 110 }, // B, both doors the same size (GDD 6)
-      chest: { x: 880, y: 740, px: 360, bigPx: 520 }, // B
-      counter: { x: 880, y: 700, w: 640, h: 80, itemPx: 220, label: 48 }, // B, the stall where Mimi shows what she knows
-      teach: { xs: [300, 640, 980], y: 700, w: 300, h: 80, itemPx: 180 }, // B, three stalls of the "?" room
-      cashier: { x: 880, y: 740, px: 430, leanDeg: 6, leanPx: 14, leanMs: 160 }, // B, the robot leans toward Mimi and holds for suspenseMs
-      npc: { x: 880, y: 740, px: 420 }, // B, gate and robot until Task 10
+      door: { w: 300, h: 420, y: 740, safeX: 900, mysteryX: 1300, glowW: 440, glowH: 560, glowAlpha: 0.35, badge: 56, icon: 110 }, // B, both doors the same size (GDD 6); the "?" glow is Sun
+      chest: { x: 1100, y: 740, px: 360, bigPx: 520 }, // B
+      counter: { x: 1000, y: 700, w: 640, h: 80, itemPx: 220, label: 48 }, // B, the stall where Mimi shows what she knows
+      teach: {
+        xs: [560, 820, 1080], y: 700, w: 230, h: 80, itemPx: 170, // B, three stalls of the "?" room
+        ask: { y: 860, gap: 400, w: 300, h: 140, glyph: 70 }, // B, Yes and No: same size, same style, centred at the bottom
+        // The book opens on the right: the word on top, its clues below. Tap any part to hear it.
+        book: { x: 1440, y: 550, w: 400, h: 440, fill: 0xf4fbff, wordY: -150, wordW: 340, wordH: 110, wordPx: 64, clueY: 50, clueDx: 95, tile: 170, clue: 100, openDx: 420, openMs: 320, pulse: 1.06, pulseMs: 140 }, // B
+      },
+      cashier: { x: 1100, y: 740, px: 430, leanDeg: 6, leanPx: 14, leanMs: 160 }, // B, the robot leans toward Mimi and holds for suspenseMs
+      npc: { x: 1100, y: 740, px: 420 }, // B, gate and robot
+      gate: { again: { x: 1450, y: 600, size: 150, glyph: 80 } }, // B, the listen-again button
+      robot: { bubble: { x: 1450, y: 470, w: 260, h: 200, pic: 130, popMs: 160 } }, // B, what the robot wants
+      helper: { px: 300, y: 740, ms: 900, depth: 14 }, // B, the helper robot walks to the stall in this long, and back
+      fx: {
+        collect: { px: 110, ms: 600, to: { x: 300, y: 88 } }, // B, the item flies toward the order row (same path for every item)
+        chest: { rise: 140, ms: 900, holdMs: 300, font: 110, stars: 6, inner: 6, outer: 14, rx: 150, ry: 110, starMs: 500 }, // B
+        reveal: { x: 1470, y: 520, px: 280, popMs: 200 }, // B, the right item, big, beside the cashier
+        sleep: { cartPx: 380, y: 800, inMs: 700, outMs: 1300 }, // B, the cart carries Mimi off
+        hop: { px: 40, ms: 160, repeat: 2 }, // B, the basic joke when no fruit joke applies
+        small: { stars: 6, inner: 5, outer: 12, rx: 150, ry: 110, ms: 500, hopPx: 20, hopMs: 140 }, // B, a right item: smaller than the big peak (GDD 2)
+      },
       bounce: { px: 24, ms: 120 }, // B, optional tap fun
     },
   },

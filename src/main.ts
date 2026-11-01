@@ -40,8 +40,6 @@ if (import.meta.env.VITE_E2E === '1') {
     point(name: string): Pt | null {
       if (name === 'go') return screen(TUNING.home.go);
       if (game.scene.isActive('Trip')) {
-        if (name === 'yes') return screen(TUNING.yes);
-        if (name === 'no') return screen(TUNING.no);
         const p = name.startsWith('card_') ? trip().cards.center(name.slice(5)) : trip().rooms.center(name);
         return p ? screen(p) : null;
       }
