@@ -47,8 +47,7 @@ export function createSpeaker(deps: SpeechDeps) {
           }
         }
       }
-      const stop = end;
-      stopCurrent = stop;
+      stopCurrent = end;
 
       function speak(): void {
         if (finished || !synth) return;

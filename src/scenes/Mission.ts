@@ -348,7 +348,6 @@ export class Mission extends Phaser.Scene {
           const star = this.add.star(x, top, 5, c.inner, c.outer, 0xffd23f).setDepth(70);
           const a = (i / c.stars) * Math.PI * 2;
           this.tweens.add({ targets: star, x: x + Math.cos(a) * c.rx, y: top + Math.sin(a) * c.ry, alpha: 0, duration: TUNING.celebrateMs, onComplete: () => star.destroy() });
-          this.time.delayedCall(TUNING.celebrateMs + TUNING.fallbackPadMs, () => star.destroy());
         }
       }
       await this.tw({ targets: this.mimi.go, y: y - c.hopPx, duration: c.hopMs, yoyo: true, repeat: c.hopRepeat }, c.hopMs * 2 * (c.hopRepeat + 1));
