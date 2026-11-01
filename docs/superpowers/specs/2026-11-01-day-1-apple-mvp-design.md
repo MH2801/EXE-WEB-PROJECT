@@ -1,6 +1,6 @@
 # Spec MVP: Day 1, nhiệm vụ Apple
 
-- Trạng thái: chờ founder duyệt
+- Trạng thái: founder đã duyệt
 - Ngày: 2026-11-01
 - Ý tưởng: Võ Đại Ngọc Minh ([tài liệu MVP](../../source/mvp-day-to-di.md), [phản hồi](../../source/phan-hoi-y-tuong-2026-11-01.md), storyboard `docs/source/day-1-storyboard.pdf`)
 - Nền tảng kỹ thuật: [ADR 0001](../../decisions/0001-nen-tang-web.md)

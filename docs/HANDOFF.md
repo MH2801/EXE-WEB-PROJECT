@@ -1,13 +1,11 @@
 # Handoff
 
 ## 1. Hiện trạng
-Đã có spec MVP, chờ founder duyệt. Chưa có code. Chưa có repo GitHub và tài khoản Cloudflare.
+Spec MVP đã được founder duyệt. Plan đã viết, chờ founder duyệt và chọn cách chạy. Chưa có code. Chưa có repo GitHub và tài khoản Cloudflare.
 
 ## 2. Tiếp theo
-1. Founder duyệt spec.
-2. Viết plan bằng `superpowers:writing-plans`.
-3. Founder duyệt plan và chọn cách chạy.
-4. Làm trong Claude Code CLI theo từng batch.
+1. Founder duyệt [plan](superpowers/plans/2026-11-01-day-1-apple-mvp.md) và chọn cách chạy.
+2. Làm trong Claude Code CLI, mở tại folder này, theo từng batch A → D.
 
 ## 3. Đang chờ từ người khác
 | Ai | Việc | Có chặn không |

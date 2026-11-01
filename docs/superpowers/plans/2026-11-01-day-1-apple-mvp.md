@@ -43,7 +43,7 @@
 - Create: `package.json`, `tsconfig.json`, `vite.config.ts`, `index.html`, `src/main.ts`, `tests/smoke.test.ts`
 
 **Interfaces:**
-- Produces: `npm run dev`, `npm test` (`vitest run`), `npm run build` (`vite build`), `GAME_W = 1672`, `GAME_H = 941` export từ `src/main.ts`.
+- Produces: `npm run dev`, `npm test` (`vitest run`), `npm run build` (`vite build`).
 
 - [ ] **Step 1:** `git -C "D:/Claude Code/Day-to-di" switch -c feat/mvp`.
 - [ ] **Step 2:** Tạo `package.json` với phiên bản ghim chính xác ở Tech Stack, `"private": true`, `"type": "module"`. Chạy `npm install`.
@@ -77,15 +77,15 @@ Bảng xref trong PDF:
 | `fg_leaf_a`, `fg_leaf_b`, `fg_banner`, `fg_emblem`, `fg_bush`, `fg_planter` | 146, 147, 148, 149, 160, 161 | 15 |
 | `stall_lemon`, `stall_apple`, `stall_banana`, `stall_grape`, `stall_orange` | 150, 152, 154, 156, 158 | 15 |
 | `fruit_lemon`, `fruit_apple`, `fruit_banana`, `fruit_grape`, `fruit_orange` | 151, 153, 155, 157, 159 | 15 |
-| `mimi_idle`, `mimi_happy` | 59, 74 | |
+| `mimi_idle`, `mimi_happy` | 59, 74 | 5 cho `mimi_idle` |
 | `mimi_think`, `mimi_puzzled`, `mimi_surprised` | 67, 357, 387 | |
-| `mom`, `npc`, `idea_bubble` | 50, 58, 68 | |
+| `mom`, `npc`, `idea_bubble` | 50, 58, 68 | 5 cho `mom` và `npc` |
 
 Quả nằm trên biển hiệu sạp, nên vị trí trang 15 của `fruit_*` là vị trí biển hiệu. Không dùng 33, 87, 373 (robot lạ, micro, khung "AI BUNNY").
 
-- [ ] **Step 1:** Thêm dòng cho `tools/extract_art.py` vào CREDITS, ghi rõ mọi hình là tài sản đã liệt kê ở dòng "Hình Day 1".
+- [ ] **Step 1:** Mở rộng dòng "Hình Day 1" trong CREDITS: ghi rõ toàn bộ `public/assets/*.webp` thuộc dòng này.
 - [ ] **Step 2:** Viết `tools/extract_art.py`: mở `docs/source/day-1-storyboard.pdf` bằng `pymupdf`, ghép `smask` khi có, lưu WebP chất lượng 82 (nền) và 90 (có alpha), lấy `page.get_image_rects(xref)` đổi sang tọa độ 1672×941, ghi `layout.json`.
-- [ ] **Step 3:** Chạy `python -I -X utf8 tools/extract_art.py`. Kỳ vọng: 29 file WebP, `layout.json` có đủ các mục trang 15.
+- [ ] **Step 3:** Chạy `python -I -X utf8 tools/extract_art.py`. Kỳ vọng: 28 file WebP, `layout.json` có đủ các mục có trang ở bảng trên.
 - [ ] **Step 4:** Chạy `du -sh public/assets`. Kỳ vọng: nhỏ hơn 12 MB. Nếu không, giảm chất lượng nền xuống 72.
 - [ ] **Step 5:** Tạo một ảnh ghép thu nhỏ trong `build/` ghép sạp và quả lên `bg_fruit_empty` theo `layout.json`, xem ảnh đó một lần: khu trái cây phải giống trang 15 của PDF.
 - [ ] **Step 6:** Commit `feat: extract Day 1 art layers`.
@@ -101,6 +101,7 @@ Quả nằm trên biển hiệu sạp, nên vị trí trang 15 của `fruit_*` l
 
 **Files:**
 - Create: `src/core/types.ts`, `src/content/lines.ts`, `src/content/fruits.ts`, `src/content/tuning.ts`, `src/content/audio-manifest.ts`, `tests/content.test.ts`
+- Modify: `src/main.ts` (dùng `TUNING.gameW`, `TUNING.gameH`)
 
 **Interfaces:**
 - Produces trong `src/core/types.ts`:
@@ -133,7 +134,7 @@ export type Save = {
 
 - Produces trong `src/content/lines.ts`: `LINES` (`as const satisfies Record<string, Line>`), `type LineId = keyof typeof LINES`, `type Line = { speaker: 'mom' | 'mimi' | 'npc' | 'kid' | 'book'; en: string; vi: string }`.
 - Produces trong `src/content/fruits.ts`: `NPC_ELIMINATE_ORDER: WrongFruit[] = ['orange', 'lemon', 'grape', 'banana']`, `RECALL_FRUITS: FruitId[] = ['apple', 'banana', 'grape']`, `npcLine(fruit: FruitId): LineId`, `heardLine(fruit: WrongFruit): LineId`.
-- Produces trong `src/content/tuning.ts`: `TUNING` với `missesForLevel1: 2`, `missesForLevel2: 3`, `idleMs: 25000`, `appleNoForTrick: 3`, `suspenseMs: 1200`, `speechRate: 0.85`, `speechBaseMs: 1500`, `speechPerCharMs: 90`, `minHitPx: 120`, `tapFeedbackMs: 100`, `repeatTripSpeed: 2`, `pitch: { mimi: 1.35, mom: 1.05, npc: 0.9, kid: 1.2, book: 1.0 }` (`pitch` là B, chỉnh khi nghe thử).
+- Produces trong `src/content/tuning.ts`: `TUNING` với `gameW: 1672`, `gameH: 941`, `missesForLevel1: 2`, `missesForLevel2: 3`, `idleMs: 25000`, `appleNoForTrick: 3`, `suspenseMs: 1200`, `speechRate: 0.85`, `speechBaseMs: 1500`, `speechPerCharMs: 90`, `minHitPx: 120`, `tapFeedbackMs: 100`, `repeatTripSpeed: 2`, `pitch: { mimi: 1.35, mom: 1.05, npc: 0.9, kid: 1.2, book: 1.0 }` (`pitch` là B, chỉnh khi nghe thử).
 - Produces trong `src/content/audio-manifest.ts`: `RECORDED: readonly LineId[] = []`.
 
 - [ ] **Step 1: Viết test.** `tests/content.test.ts`:
@@ -181,6 +182,8 @@ export type Effect =
   | { t: 'book'; state: 'hidden' | 'pulse' | 'idle' }
   | { t: 'stalls'; enabled: boolean }
   | { t: 'npc'; fruit: FruitId; visit: number }
+  | { t: 'npcLeave' }
+  | { t: 'momLook' }
   | { t: 'joke'; fruit: WrongFruit }
   | { t: 'wait'; ms: number }
   | { t: 'celebrate' }
@@ -221,10 +224,13 @@ Quy tắc chung của `step`:
 - `toSave` bỏ `belief`. Effect `save` đứng ngay sau mỗi thay đổi `knowledge`.
 - Vào `choosing`, xét theo thứ tự: nếu `misses >= missesForLevel2` và `support < 2` thì sang `npc_apple`; nếu `misses >= missesForLevel1`, `support < 1` và còn quả sai chưa loại thì sang `npc_eliminate`; nếu không thì ở lại, `stalls enabled`.
 - Sự kiện `idle` trong `choosing`: `support` 0 và còn quả sai thì `npc_eliminate`; `support` 0 và hết quả sai, hoặc `support` 1, thì `npc_apple`; `support` 2 thì không làm gì.
-- `npc_eliminate` chọn quả đầu tiên trong `NPC_ELIMINATE_ORDER` chưa có trong `notApple`, đặt `support = 1`, thêm vào `notApple`, phát `npc`, `mark`, `say heardLine`.
-- `npc_apple` tăng `npcVisits`, đặt `support = 2`, phát `npc`, `say npc.apple`, rồi vào `asking` với `pick = 'apple'` và câu `mimi.heard` nếu `npcVisits === 1`, ngược lại `mimi.really`.
+- `npc_eliminate` chọn quả đầu tiên trong `NPC_ELIMINATE_ORDER` chưa có trong `notApple`, đặt `support = 1`, thêm vào `notApple`, phát theo thứ tự `npc`, `say npcLine`, `npcLeave`, `mark`, `say heardLine`.
+- `npc_apple` tăng `npcVisits`, đặt `support = 2`, phát `npc`, `say npc.apple`, `npcLeave`, rồi vào `asking` với `pick = 'apple'` và câu `mimi.heard` nếu `npcVisits === 1`, ngược lại `mimi.really`.
 - `said_no` với `apple` tăng `appleNo`; bằng `appleNoForTrick` thì sang `tricked`, ngược lại sang `npc_apple`. `said_no` với quả sai tăng `misses`, thêm `notApple`, phát `mark`, về `choosing`.
-- `to_mom` chỉ có một bộ effect, không đọc `pick === 'apple'`. Việc tách nhánh chỉ xảy ra khi `to_mom` nhận `effectsDone`.
+- `to_mom` chỉ có một bộ effect (`walk`, `say mimi.here`, `momLook`, `wait suspenseMs`), không đọc `pick === 'apple'`. Việc tách nhánh chỉ xảy ra khi `to_mom` nhận `effectsDone`.
+- `mom_no` tăng `misses` và `wrongTrips`, thêm `notApple`, đặt `belief = null`, phát `mark`. `mom_thanks` đặt `learnedFrom = 'child'`. `tricked` đặt `learnedFrom = 'mom'`, `maxSupport = 3`.
+- `bookOpen` và `bookWord` hợp lệ ở `choosing` và `asking`, không đổi phase.
+- `recallPick` đưa phase sang `memory_reveal` ngay, với các effect `say`, `save`, `goMemory`; `memory_reveal` đặt `missionDone = true`, nhận `effectsDone` thì sang `done`.
 - Lần mang thứ hai trở đi `walk.speed = repeatTripSpeed`.
 - `start`: `apple === 'learned'` → `replay`; có `notApple` → `arrive`; còn lại → `intro`.
 
@@ -244,7 +250,7 @@ Quy tắc chung của `step`:
 | `two misses bring level 1` | Sau 2 lần sai có `npc` với `orange`, sau đó orange nằm trong `notApple`, `maxSupport === 1` |
 | `level 1 skips rejected fruit` | Đã loại orange và lemon thì NPC chọn `grape` |
 | `three misses bring level 2` | Có `npc` với `apple`, câu `npc.apple`, phase `asking` với `pick === 'apple'` |
-| `idle climbs the ladder then stops` | `idle` lần 1 ra `npc_eliminate`, lần 2 ra `npc_apple`, lần 3 không có effect |
+| `idle climbs the ladder then stops` | `idle` lần 1 ra `npc_eliminate`, lần 2 ra `npc_apple`; ở `choosing` với `support: 2`, `idle` trả `effects: []` |
 | `recall right first try` | `recallPick apple` → `recallFirstTry === true`, có `mimi.yes_apple` |
 | `recall wrong has no wrong feedback` | `recallPick banana` → `recallFirstTry === false`, có `mimi.i_know`, phase vẫn tới `memory_reveal` |
 | `double tap counts once` | Gửi `tapYes` hai lần liền: lần 2 trả `effects: []`, state giống hệt |
@@ -254,7 +260,7 @@ Quy tắc chung của `step`:
 | `learned save starts replay` | `start` → `replay`, có `mimi.i_know`, không có `yesNo`, kết thúc `done` |
 | `partial save resumes at arrive` | `notApple: ['lemon']` → phase `arrive`, có `mark` lemon |
 | `belief is never saved` | `toSave` không có khóa `belief` |
-| `random play always finishes` | 1.000 lượt với seed cố định, mỗi bước chọn ngẫu nhiên một sự kiện hợp lệ của phase, tối đa 200 bước, luôn tới `done` |
+| `random play always finishes` | 1.000 lượt với seed cố định, mỗi bước chọn ngẫu nhiên một sự kiện hợp lệ của phase, tối đa 500 bước, luôn tới `done` |
 
 - [ ] **Step 3:** Chạy `npx vitest run tests/mission.test.ts`. Kỳ vọng: FAIL vì chưa có `mission.ts`.
 - [ ] **Step 4:** Viết `src/core/mission.ts` theo interface và quy tắc trên, lấy trình tự effect của từng phase từ spec §5.
@@ -333,7 +339,7 @@ export function runEffects(effects: Effect[], h: Handlers): Promise<void>;
 Không có file nào ở đây import Phaser. Scene truyền `setTimer` dựa trên `scene.time.delayedCall`, nên đồng hồ dừng cùng game khi tab ẩn.
 
 - [ ] **Step 1: Viết test.**
-  - `tests/speech.test.ts` dùng fake: `deadline formula` (`lineDeadlineMs('abcd') === 1860`); `resolves on utterance end`; `resolves at deadline when end never fires`; `resolves at deadline when synth is null`; `resolves on utterance error`; `skip resolves now and cancels speech`; `skip twice is safe`; `new say cancels previous`; `recorded line uses file not synth`; `failed file falls back to synth`; `pause then resume calls synth once each`; `picks an English voice and the speaker pitch`.
+  - `tests/speech.test.ts` dùng fake: `deadline formula` (`lineDeadlineMs('abcd') === 1860`); `resolves on utterance end`; `resolves at deadline when end never fires`; `resolves at deadline when synth is null`; `resolves on utterance error`; `skip resolves now and cancels speech`; `skip twice is safe`; `new say cancels previous`; `recorded line uses file not synth`; `failed file falls back to synth`; `pause then resume calls synth once each`; `deadline only runs through injected timer`; `picks an English voice and the speaker pitch`.
   - `tests/runner.test.ts`: `runs effects in order`; `waits for async handler`; `throwing handler does not stop the rest`; `empty list resolves`.
 - [ ] **Step 2:** Chạy test. Kỳ vọng: FAIL.
 - [ ] **Step 3:** Viết hai file. Chọn giọng: giọng đầu tiên có `lang` bắt đầu bằng `en`, ưu tiên `en-US`; không có thì để mặc định. Lỗi trong handler ghi `console.error` rồi đi tiếp.
@@ -395,7 +401,7 @@ private async dispatch(e: MissionEvent) {
 }
 ```
 
-`afterEffects` gửi `effectsDone` khi phase thuộc nhóm tự chạy, ngược lại bật lại input và đồng hồ rảnh. Trong lúc `busy`, chạm chỉ gọi `speaker.skip()`.
+`afterEffects` gửi `effectsDone` khi phase thuộc nhóm tự chạy, ngược lại bật lại input và đồng hồ rảnh. Trong lúc `busy`, chạm chỉ gọi `speaker.skip()`. `goMemory` là effect cuối: sau khi scene đã rời đi, `afterEffects` không làm gì.
 
 - [ ] **Step 1:** Viết `stalls.ts`: nền `bg_fruit_empty`, sạp theo `layout.json`, biển hiệu `fruit_*` đặt trên sạp, lớp `fg_*` trên cùng. Vùng bấm là cả sạp. `mark` làm sạp mờ và gắn nhãn Mimi lắc đầu.
 - [ ] **Step 2:** Viết `book.ts`: icon góc màn hình, mở ra bảng APPLE, ô đỏ, ô tròn, vẽ bằng Phaser, nút đóng. Mỗi mục bấm để gọi `speak` và gửi `bookWord`. Mở lần nào cũng gửi `bookOpen`.
@@ -483,7 +489,8 @@ private async dispatch(e: MissionEvent) {
 
 **Files:**
 - Create: `wrangler.jsonc`, `docs/playtest-day-1.md`
-- Modify: `docs/HANDOFF.md`, `docs/decisions/0001-nen-tang-web.md` không sửa; ghi chọn Workers static assets vào `docs/decisions/0002-cloudflare-workers-static-assets.md`
+- Create: `docs/decisions/0002-cloudflare-workers-static-assets.md`
+- Modify: `docs/HANDOFF.md`
 
 **Interfaces:**
 - Consumes: `dist/` từ `npm run build`.
