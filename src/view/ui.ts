@@ -46,7 +46,7 @@ export function makeButton(
   const flash = scene.add.graphics().fillStyle(0xffffff, 0.4).fillRoundedRect(-w / 2, -h / 2, w, h, 28).setAlpha(0);
   const kids: Phaser.GameObjects.GameObject[] = [body, flash];
   if (opts.icon) kids.push(scene.add.image(0, 0, opts.icon));
-  if (opts.label) kids.push(scene.add.text(0, 0, opts.label, { fontFamily: 'sans-serif', fontSize: '40px', color: '#fff', fontStyle: 'bold' }).setOrigin(0.5));
+  if (opts.label) kids.push(scene.add.text(0, 0, opts.label, { fontFamily: 'sans-serif', fontSize: '40px', color: '#16324f', fontStyle: 'bold' }).setOrigin(0.5));
   const c = scene.add.container(x, y, kids).setSize(w, h).setInteractive({ useHandCursor: true });
   let last = -Infinity;
   const release = () => {
