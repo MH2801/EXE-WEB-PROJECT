@@ -48,3 +48,21 @@ export type LineId = keyof typeof LINES;
 
 /** Words printed on buttons and the book; the game is playable without reading them. */
 export const LABELS = { yes: 'Yes', no: 'No', apple: 'APPLE' } as const;
+
+/** Parent-facing Vietnamese text (not child lines: the 7-word rule does not apply). */
+export const PARENT = {
+  title: 'Khu phụ huynh',
+  gateAsk: 'Dành cho người lớn. Bấm đáp án đúng:',
+  back: 'Quay lại',
+  subOn: 'Phụ đề tiếng Việt: Bật',
+  subOff: 'Phụ đề tiếng Việt: Tắt',
+  reset: 'Chơi lại',
+  resetAsk: 'Xóa dữ liệu của bé và chơi lại từ đầu?',
+  resetYes: 'Xóa',
+  resetNo: 'Giữ lại',
+  // Fixed text, never part of buildReport (spec 11).
+  disclaimer: 'Đây là một lần chơi, chưa đo được trình độ; Mimi là nhân vật có kịch bản. Không điểm số, không so sánh với bé khác.',
+} as const;
+
+/** Memory screen texts that are painted over the storyboard art. */
+export const MEMORY = { title: 'What Mimi Knows', remembered: 'I remember: apple' } as const;

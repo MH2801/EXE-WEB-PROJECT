@@ -62,5 +62,32 @@ export const TUNING = {
   momNodPx: 14, // B
   joke: { angle: 10, stepMs: 90, repeat: 3 }, // B, placeholder wobble
   celebrate: { stars: 10, inner: 7, outer: 18, rx: 260, ry: 200, hopPx: 50, hopMs: 180, hopRepeat: 1, holdMs: 450 }, // B, placeholder burst
+  // Memory and Parent view (Task 9). All B, tune by eye; positions are in the 1672x941 logic frame.
+  memory: {
+    back: { x: 86, y: 80, w: 120, h: 120 }, // painted back arrow in bg_memory
+    pill: { x: 844, y: 206, w: 296, h: 50, font: 34 }, // covers "What Mimi Know"
+    cell1: { x: 564, y: 381, w: 186, h: 152 }, // first Fruits cell
+    cell2: { x: 755, y: 381, w: 186, h: 152 }, // next dim cell Mimi looks at
+    fruitPx: 130,
+    head: { x: 1343, y: 593, w: 510, h: 56, font: 46 }, // covers "Nothing remembered yet"
+    sub: { x: 1343, y: 668, w: 490, h: 90 }, // covers the hint under it; holds the apple icon
+    subFruitPx: 70,
+    popMs: 500, // apple pops in
+    glowMs: 450, // glow pulse
+    glowRepeat: 2,
+    lookMs: 400, // dim cell pulse while Mimi says "next"
+  },
+  parent: {
+    back: { x: 130, y: 75, w: 220, h: 120 },
+    title: { x: 560, y: 75, font: 52 },
+    toggle: { x: 1100, y: 75, w: 470, h: 120 },
+    reset: { x: 1520, y: 75, w: 260, h: 120 },
+    rowsY: 200, rowStep: 118, rowX: 120, labelFont: 30, valueFont: 36, wrapW: 1430,
+    noteY: 810, noteFont: 28, noteWrap: 1430,
+    gateAskY: 300, gateAskFont: 46, gateQY: 420, gateQFont: 110, gateY: 650, gateGap: 340, gateW: 260, gateH: 160, gateFont: 72,
+    gateMin: 6, gateMax: 9, // times table range (spec 11)
+    confirm: { w: 1000, h: 480, askFont: 44, btnY: 590, btnW: 300, btnGap: 200 },
+    btnFont: 34,
+  },
   markTag: { scale: 0.2, dy: 50, angle: 14, ms: 140, repeat: 3 }, // B, Mimi head on a rejected stall
 } as const;
