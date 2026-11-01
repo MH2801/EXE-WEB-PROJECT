@@ -9,7 +9,9 @@ import type { FruitId } from '../core/types';
 import { MissionBook } from '../view/book';
 import { Mimi } from '../view/actors';
 import { Dialogue } from '../view/dialogue';
+import { burst, playJoke } from '../view/jokes';
 import { runEffects, type Handlers } from '../view/runner';
+import { playSfx } from '../view/sfx';
 import { Stalls } from '../view/stalls';
 import { addRotateOverlay, makeButton, makeSpeaker, reducedMotion } from '../view/ui';
 
@@ -164,7 +166,7 @@ export class Mission extends Phaser.Scene {
 
   private onHidden(): void {
     this.tabHidden = true;
-    this.speaker.pause(); // note: a recorded clip (RECORDED is empty today) cannot be paused
+    this.speaker.pause(); // speech and a recorded clip
     if (this.idleEv) this.idleEv.paused = true;
   }
 
@@ -229,6 +231,7 @@ export class Mission extends Phaser.Scene {
 
   private onStall(f: FruitId): void {
     if (this.busy) return;
+    playSfx('pop'); // tap feedback within 100 ms (spec 9)
     this.dispatch({ t: 'tapStall', fruit: f });
   }
 
@@ -261,6 +264,7 @@ export class Mission extends Phaser.Scene {
   private onRecall(f: FruitId): void {
     if (this.busy || this.picked) return; // the first tap is the result (spec 7)
     this.picked = true;
+    playSfx('pop');
     this.dispatch({ t: 'recallPick', fruit: f });
   }
 
@@ -289,6 +293,7 @@ export class Mission extends Phaser.Scene {
       this.lifted?.destroy();
       this.lifted = null;
       if (!e.fruit) return;
+      playSfx('pop');
       const { x, y, scale, ms } = TUNING.lift;
       const from = this.bg === 'fruit' ? this.stalls.center(e.fruit) : { x: this.mimi.go.x, y: this.mimi.go.y - TUNING.headDy };
       const img = this.add.image(from.x, from.y, `fruit_${e.fruit}`).setDepth(60);
@@ -327,27 +332,31 @@ export class Mission extends Phaser.Scene {
       if (this.npc === c) this.npc = null;
     },
     momLook: async () => {
-      await this.tw({ targets: this.mom, y: this.mom.y + TUNING.momNodPx, duration: TUNING.momNodMs / 2, yoyo: true }, TUNING.momNodMs);
+      // Mom leans in to look and holds it through the suspense wait that follows (spec 3, 4).
+      if (reducedMotion()) return;
+      const half = TUNING.momNodMs / 2;
+      this.tweens.add({ targets: this.mom, y: LAY.mom!.y + TUNING.momNodPx, angle: TUNING.momLeanDeg, duration: half, yoyo: true, hold: TUNING.suspenseMs });
+      await this.wait(half);
     },
-    // Placeholder joke: a wobble. The per-fruit scenes of spec 9 come with their own task.
-    joke: async () => {
-      this.mimi.pose('surprised');
-      const j = TUNING.joke;
-      await this.tw({ targets: this.mimi.go, angle: j.angle, duration: j.stepMs, yoyo: true, repeat: j.repeat }, j.stepMs * 2 * (j.repeat + 1));
-      this.mimi.go.setAngle(0);
-      if (reducedMotion()) await this.wait(TUNING.jokeMs);
-    },
+    joke: (e) => playJoke(this, this.mimi, e.fruit), // has its own deadline
     wait: (e) => this.wait(e.ms),
-    // Placeholder celebration: two hops and a burst of stars.
+    // Hops and a star burst; "Thank you!" alone adds fireworks, so it stays the biggest peak (spec 3).
     celebrate: async () => {
       const { x, y } = this.mimi.go;
       const c = TUNING.celebrate;
       const top = y - TUNING.headDy;
+      playSfx('sparkle');
       if (!reducedMotion()) {
-        for (let i = 0; i < c.stars; i++) {
-          const star = this.add.star(x, top, 5, c.inner, c.outer, 0xffd23f).setDepth(70);
-          const a = (i / c.stars) * Math.PI * 2;
-          this.tweens.add({ targets: star, x: x + Math.cos(a) * c.rx, y: top + Math.sin(a) * c.ry, alpha: 0, duration: TUNING.celebrateMs, onComplete: () => star.destroy() });
+        burst(this, x, top, c.stars, c.color, c.inner, c.outer, c.rx, c.ry, TUNING.celebrateMs);
+        const f = TUNING.fireworks;
+        if (this.state.phase === 'mom_thanks') {
+          for (const [dx, dy, color, delay] of f.shots) {
+            this.time.delayedCall(delay, () => {
+              if (this.left) return;
+              burst(this, x + dx, top + dy, f.sparks, color, f.r / 2, f.r, f.rx, f.ry, f.ms);
+              playSfx('pop');
+            });
+          }
         }
       }
       await this.tw({ targets: this.mimi.go, y: y - c.hopPx, duration: c.hopMs, yoyo: true, repeat: c.hopRepeat }, c.hopMs * 2 * (c.hopRepeat + 1));

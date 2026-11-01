@@ -25,7 +25,7 @@ export const TUNING = {
   hopMs: 180, // B
   bobPx: 6, // B
   bobMs: 260, // B
-  dialogue: { x: 836, y: 840, w: 1300, h: 170 }, // B, centre of the box
+  dialogue: { x: 836, y: 862, w: 1300, h: 140 }, // B, centre of the box; its top (792) stays below feetY
   titleHits: {
     start: { x: 1006, y: 722, w: 640, h: 190 },
     learn: { x: 1530, y: 325, w: 260, h: 130 },
@@ -35,9 +35,9 @@ export const TUNING = {
   }, // B, drawn over bg_title's painted buttons
   // Mission view (Task 8). All B, tune by eye; positions are in the 1672x941 logic frame.
   mimiScale: 0.72, // B, layout.json draws Mimi 381 px tall, the art is 527
-  feetY: 860, // B, where Mimi's feet stand (the dialogue box overlaps her feet a little)
-  momSpot: { x: 1000, y: 860 }, // B, right of mom (layout mom x 550, w 545)
-  fruitSpot: { x: 836, y: 860 }, // B
+  feetY: 790, // B, where Mimi's feet stand: just above the dialogue box so a line never hides them
+  momSpot: { x: 1000, y: 790 }, // B, right of mom (layout mom x 550, w 545)
+  fruitSpot: { x: 836, y: 790 }, // B, y = feetY
   offscreenPad: 200, // B, Mimi enters from this far outside the frame
   lift: { x: 836, y: 300, scale: 3, ms: 350 }, // B, the fruit Mimi looks at
   yes: { x: 560, y: 620 }, // B, fixed (spec 9)
@@ -51,9 +51,8 @@ export const TUNING = {
   npcY: 582, // B
   npcMs: 600, // B, walk in / out
   fallbackPadMs: 300, // B, timer fallback after an awaited tween
-  jokeMs: 350, // B, reduced-motion hold for the placeholder joke (the real jokes come in a later task)
-  celebrateMs: 900, // B, placeholder celebration
-  momNodMs: 400, // B
+  celebrateMs: 900, // B, star burst flight
+  momNodMs: 400, // B, mom leans in (half) and back (half); she holds the lean through suspenseMs
   recall: { y: 470, gap: 386, scale: 2.6, card: 300 }, // B, three big fruits (spec 7)
   book: { x: 110, y: 130, size: 140, panelX: 836, panelY: 400, panelW: 960, panelH: 520, cell: 240, closeSize: 130 }, // B
   pulseMs: 700, // B, book icon pulse
@@ -63,8 +62,27 @@ export const TUNING = {
   npcWant: { x: 90, y: -80, scale: 1.4 }, // B, the fruit icon the customer holds
   npcTint: [0xffffff, 0xffffff, 0xffc27a, 0x9fd8ff], // B, by visit: a returning customer has another colour (spec 5.2)
   momNodPx: 14, // B
-  joke: { angle: 10, stepMs: 90, repeat: 3 }, // B, placeholder wobble
-  celebrate: { stars: 10, inner: 7, outer: 18, rx: 260, ry: 200, hopPx: 50, hopMs: 180, hopRepeat: 1, holdMs: 450 }, // B, placeholder burst
+  momLeanDeg: -4, // B, mom tilts toward Mimi while she looks at the fruit
+  celebrate: { stars: 10, color: 0xffd23f, inner: 7, outer: 18, rx: 260, ry: 200, hopPx: 50, hopMs: 180, hopRepeat: 1, holdMs: 450 }, // B, the biggest peak (spec 3)
+  // Small fireworks after the star burst: [dx, dy from the burst centre, colour, delay ms].
+  fireworks: { shots: [[-330, -120, 0xff7aa8, 200], [330, -160, 0x7ad8ff, 380], [0, -260, 0xb6f07a, 560]], sparks: 8, r: 6, rx: 110, ry: 90, ms: 650 }, // B
+  // Sound effects (Task 10): quiet WebAudio blips. Every melody is flat or rising (spec 9, lessons.md).
+  sfx: {
+    gain: 0.08, // B, quiet under the voice
+    attackMs: 6, // B
+    noteMs: { pop: 45, sparkle: 70, boing: 60 }, // B, length of each note
+    wave: { pop: 'triangle', sparkle: 'sine', boing: 'square' }, // B
+    notes: { pop: [660, 990], sparkle: [1047, 1319, 1568, 2093], boing: [196, 262, 392, 523] }, // B, Hz, never falling
+  },
+  // Wrong-fruit jokes (spec 9). All B, tune by eye with the founder.
+  jokes: {
+    maxMs: 2600, // B, hard deadline: a joke can never hold up the mission
+    stillMs: 700, // B, reduced motion: surprised pose held, then happy
+    lemon: { biteMs: 220, biteSquash: 0.88, tint: 0xeaff8a, shakePx: 10, shakeMs: 50, shakes: 8, stars: 7, starColor: 0xfff176, starInner: 6, starOuter: 15, starRx: 170, starRy: 130, starMs: 700, holdMs: 350 },
+    banana: { slipDeg: -25, slipMs: 180, hopPx: 70, spinMs: 650, sitSquash: 0.85, sitMs: 250, holdMs: 350 },
+    grape: { count: 7, scale: 0.45, spreadX: 520, floorDy: 20, fallMs: 700, staggerMs: 70, hopPx: 40, hopMs: 160, hops: 3, restMs: 150, fadeMs: 250 },
+    orange: { scale: 0.8, dropMs: 300, rollPx: 380, rollMs: 600, turns: 2, chase: 0.6, chaseSpeed: 1.5, holdMs: 250 },
+  },
   // Memory and Parent view (Task 9). All B, tune by eye; positions are in the 1672x941 logic frame.
   memory: {
     back: { x: 86, y: 80, w: 120, h: 120 }, // painted back arrow in bg_memory

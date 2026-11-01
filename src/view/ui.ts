@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { createSpeaker } from './speech';
 import { RECORDED } from '../content/audio-manifest';
 import { TUNING } from '../content/tuning';
+import { playSfx } from './sfx';
 
 export const reducedMotion = (): boolean =>
   typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -19,7 +20,7 @@ export function makeSpeaker(scene: Phaser.Scene): ReturnType<typeof createSpeake
         s.once('loaderror', () => rej(new Error(id)));
       });
       s.play();
-      return { done, stop: () => s.destroy() };
+      return { done, stop: () => s.destroy(), pause: () => s.pause(), resume: () => s.resume() };
     },
     // delayedCall runs on the scene clock, so it stops with a hidden tab.
     setTimer: (ms, fn) => {
@@ -59,6 +60,7 @@ export function makeButton(
     const now = scene.time.now;
     if (now - last < TUNING.tapDebounceMs) return;
     last = now;
+    playSfx('pop'); // sound with the flash, within 100 ms (spec 9)
     opts.onTap();
   });
   c.on('pointerup', release).on('pointerout', release);

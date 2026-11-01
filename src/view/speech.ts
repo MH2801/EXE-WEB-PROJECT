@@ -6,7 +6,7 @@ export type Timer = (ms: number, fn: () => void) => () => void;
 export type SpeechDeps = {
   synth: Pick<SpeechSynthesis, 'speak' | 'cancel' | 'pause' | 'resume' | 'getVoices'> | null;
   makeUtterance: (text: string) => SpeechSynthesisUtterance;
-  playFile: (id: LineId) => { done: Promise<void>; stop: () => void };
+  playFile: (id: LineId) => { done: Promise<void>; stop: () => void; pause: () => void; resume: () => void };
   setTimer: Timer;
 };
 
@@ -20,6 +20,7 @@ function pickVoice(synth: NonNullable<SpeechDeps['synth']>): SpeechSynthesisVoic
 export function createSpeaker(deps: SpeechDeps) {
   const { synth, setTimer } = deps;
   let stopCurrent: (() => void) | null = null;
+  let file: { pause: () => void; resume: () => void } | null = null; // the recorded clip now playing
 
   function skip(): void {
     const stop = stopCurrent;
@@ -38,6 +39,7 @@ export function createSpeaker(deps: SpeechDeps) {
       function end(): void {
         if (finished) return;
         finished = true;
+        file = null;
         resolve(); // first: nothing below may keep the line from ending
         for (const cleanup of [cancelTimer, () => stopFile?.(), () => synth?.cancel()]) {
           try {
@@ -70,6 +72,7 @@ export function createSpeaker(deps: SpeechDeps) {
         try {
           const f = deps.playFile(id);
           stopFile = f.stop;
+          file = f;
           f.done.then(end, speak);
           return;
         } catch (e) {
@@ -83,7 +86,13 @@ export function createSpeaker(deps: SpeechDeps) {
   return {
     say,
     skip,
-    pause: () => synth?.pause(),
-    resume: () => synth?.resume(),
+    pause: () => {
+      synth?.pause();
+      file?.pause();
+    },
+    resume: () => {
+      synth?.resume();
+      file?.resume();
+    },
   };
 }

@@ -18,7 +18,11 @@ function setup(opts: { synth?: boolean; voices?: { lang: string }[]; fileFails?:
   const stop = vi.fn(() => {
     if (opts.stopThrows) throw new Error('stop');
   });
+  const filePause = vi.fn();
+  const fileResume = vi.fn();
   const playFile = vi.fn(() => ({
+    pause: filePause,
+    resume: fileResume,
     done: opts.fileFails ? Promise.reject(new Error('x')) : opts.fileDone ? Promise.resolve() : new Promise<void>(() => {}),
     stop,
   }));
@@ -37,7 +41,7 @@ function setup(opts: { synth?: boolean; voices?: { lang: string }[]; fileFails?:
     },
   };
   const fire = () => timers.filter((t) => t.live).forEach((t) => ((t.live = false), t.fn()));
-  return { speaker: createSpeaker(deps), synth, playFile, stop, timers, utterances, fire };
+  return { speaker: createSpeaker(deps), synth, playFile, stop, timers, utterances, fire, filePause, fileResume };
 }
 
 const flush = () => new Promise((r) => setTimeout(r, 0));
@@ -136,6 +140,18 @@ describe('speech', () => {
     f.speaker.resume();
     expect(f.synth.pause).toHaveBeenCalledTimes(1);
     expect(f.synth.resume).toHaveBeenCalledTimes(1);
+  });
+
+  it('pause and resume reach a playing recorded file, not an ended one', () => {
+    const f = setup();
+    void f.speaker.say('mom.ask');
+    f.speaker.pause();
+    f.speaker.resume();
+    expect(f.filePause).toHaveBeenCalledTimes(1);
+    expect(f.fileResume).toHaveBeenCalledTimes(1);
+    f.speaker.skip();
+    f.speaker.pause();
+    expect(f.filePause).toHaveBeenCalledTimes(1);
   });
 
   it('deadline only runs through injected timer', async () => {

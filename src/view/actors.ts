@@ -5,8 +5,8 @@ import { reducedMotion } from './ui';
 
 export class Mimi {
   readonly go: Phaser.GameObjects.Container;
-  private body: Phaser.GameObjects.Image;
-  private held: Phaser.GameObjects.Image | null = null;
+  readonly body: Phaser.GameObjects.Image; // read by the jokes (view/jokes.ts)
+  held: Phaser.GameObjects.Image | null = null;
   private bob: Phaser.Tweens.Tween | null = null;
 
   constructor(private scene: Phaser.Scene, x: number, y: number) {
@@ -21,6 +21,7 @@ export class Mimi {
   walkTo(x: number, y: number, speed: number): Promise<void> {
     const dist = Phaser.Math.Distance.Between(this.go.x, this.go.y, x, y);
     const duration = Math.max(1, (dist / (TUNING.mimiPxPerSec * speed)) * 1000);
+    this.face(x);
     return new Promise<void>((resolve) => {
       const hop = reducedMotion()
         ? null
@@ -32,6 +33,11 @@ export class Mimi {
       };
       this.scene.tweens.add({ targets: this.go, x, y, duration, onComplete: end, onStop: end });
     });
+  }
+
+  /** The art faces right; flip when the target is to her left. Equal x keeps the current facing. */
+  face(x: number): void {
+    if (x !== this.go.x) this.body.setFlipX(x < this.go.x);
   }
 
   carry(texture: string | null): void {
