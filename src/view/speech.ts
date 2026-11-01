@@ -38,15 +38,14 @@ export function createSpeaker(deps: SpeechDeps) {
       function end(): void {
         if (finished) return;
         finished = true;
-        cancelTimer();
-        stopFile?.();
-        if (stopCurrent === stop) stopCurrent = null;
-        try {
-          synth?.cancel();
-        } catch (e) {
-          console.error(e);
+        resolve(); // first: nothing below may keep the line from ending
+        for (const cleanup of [cancelTimer, () => stopFile?.(), () => synth?.cancel()]) {
+          try {
+            cleanup();
+          } catch (e) {
+            console.error(e);
+          }
         }
-        resolve();
       }
       const stop = end;
       stopCurrent = stop;
@@ -56,6 +55,7 @@ export function createSpeaker(deps: SpeechDeps) {
         try {
           const u = deps.makeUtterance(en);
           const voice = pickVoice(synth);
+          u.lang = 'en-US'; // so an empty voice list never reads English with a Vietnamese default
           if (voice) u.voice = voice;
           u.pitch = TUNING.pitch[speaker];
           u.rate = TUNING.speechRate;

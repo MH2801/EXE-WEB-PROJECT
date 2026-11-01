@@ -5,7 +5,7 @@ import { TUNING } from '../src/content/tuning';
 
 vi.mock('../src/content/audio-manifest', () => ({ RECORDED: ['mom.ask'] }));
 
-function setup(opts: { synth?: boolean; voices?: { lang: string }[]; fileFails?: boolean } = {}) {
+function setup(opts: { synth?: boolean; voices?: { lang: string }[]; fileFails?: boolean; fileDone?: boolean; stopThrows?: boolean } = {}) {
   const timers: { ms: number; fn: () => void; live: boolean }[] = [];
   const utterances: Record<string, unknown>[] = [];
   const synth = {
@@ -15,9 +15,11 @@ function setup(opts: { synth?: boolean; voices?: { lang: string }[]; fileFails?:
     resume: vi.fn(),
     getVoices: vi.fn(() => (opts.voices ?? []) as SpeechSynthesisVoice[]),
   };
-  const stop = vi.fn();
+  const stop = vi.fn(() => {
+    if (opts.stopThrows) throw new Error('stop');
+  });
   const playFile = vi.fn(() => ({
-    done: opts.fileFails ? Promise.reject(new Error('x')) : new Promise<void>(() => {}),
+    done: opts.fileFails ? Promise.reject(new Error('x')) : opts.fileDone ? Promise.resolve() : new Promise<void>(() => {}),
     stop,
   }));
   const deps: SpeechDeps = {
@@ -166,5 +168,40 @@ describe('speech', () => {
     const h = setup({ voices: [{ lang: 'fr-FR' }] });
     void h.speaker.say(SYNTH_ID);
     expect(h.utterances[0]!.voice).toBeUndefined();
+  });
+
+  it('recorded file that finishes resolves the line', async () => {
+    const f = setup({ fileDone: true });
+    expect(await settled(f.speaker.say('mom.ask'))).toBe(true);
+    expect(f.synth.speak).not.toHaveBeenCalled();
+  });
+
+  it('throwing file stop still resolves and next say plays', async () => {
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const f = setup({ stopThrows: true });
+    const p1 = f.speaker.say('mom.ask');
+    const p2 = f.speaker.say(SYNTH_ID);
+    expect(await settled(p1)).toBe(true);
+    expect(f.synth.speak).toHaveBeenCalledTimes(1);
+    expect(await settled(p2)).toBe(false);
+    f.fire();
+    expect(await settled(p2)).toBe(true);
+    err.mockRestore();
+  });
+
+  it('stale end from an earlier line does not resolve the next', async () => {
+    const f = setup();
+    void f.speaker.say(SYNTH_ID);
+    const staleEnd = f.utterances[0]!.onend as () => void;
+    const p2 = f.speaker.say('mimi.what');
+    staleEnd();
+    f.timers[0]!.fn(); // stale deadline of line A
+    expect(await settled(p2)).toBe(false);
+  });
+
+  it('always sets lang en-US even with no voices', () => {
+    const f = setup();
+    void f.speaker.say(SYNTH_ID);
+    expect(f.utterances[0]!.lang).toBe('en-US');
   });
 });
