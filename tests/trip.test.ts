@@ -546,9 +546,16 @@ describe('hidden truth, widened', () => {
           const col = run.yes.find((e) => e.t === 'collect');
           expect(bub && bub.t === 'bubble' && bub.show).toBe(pick);
           expect(col && col.t === 'collect' && col.item).toBe(pick);
+          // Every fruit bubble and collect the Yes itself plays (up to the first walk) carries the pick...
+          const now = run.yes.slice(0, kinds(run.yes).indexOf('map'));
+          const items = now.flatMap((e) => (e.t === 'bubble' && e.show && e.show !== '?' ? [e.show] : e.t === 'collect' ? [e.item] : []));
+          expect(items).toEqual([pick, pick]);
+          // ...and so does Mimi's bubble in the cashier's last frame before the verdict (the new item is handled last), for right and wrong alike.
+          const cut = (fx: TripEffect[]) => fx.slice(0, kinds(fx).lastIndexOf('wait') + 1);
+          const shown = cut(run.post).filter((e) => e.t === 'bubble' && e.show);
+          expect(shown.at(-1)).toEqual({ t: 'bubble', show: pick });
           if (pick === answer) continue;
           expect(masked(run.ask)).toBe(masked(right.ask));
-          const cut = (fx: TripEffect[]) => fx.slice(0, kinds(fx).lastIndexOf('wait') + 1);
           expect(masked(cut(run.post))).toBe(masked(cut(right.post)));
           expect(JSON.stringify(cut(run.post))).not.toBe(JSON.stringify(cut(right.post)));
           expect(JSON.stringify(run.post.slice(cut(run.post).length))).not.toBe(JSON.stringify(right.post.slice(cut(right.post).length)));
