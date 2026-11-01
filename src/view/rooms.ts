@@ -52,7 +52,7 @@ export class RoomView {
     this.hide();
     const { gameW: w, gameH: h } = TUNING;
     this.add(this.scene.add.rectangle(w / 2, h / 2, w, h, COLORS.indigo).setDepth(0));
-    this.add(this.scene.add.rectangle(w / 2, V.floor.y + V.floor.h / 2, w, V.floor.h, COLORS.paper, 0.14).setDepth(1));
+    this.add(this.scene.add.rectangle(w / 2, V.floor.y + V.floor.h / 2, w, V.floor.h, COLORS.paper, V.look.floorAlpha).setDepth(1));
     switch (room.kind) {
       case 'stall':
         return this.stall(room.word);
@@ -140,20 +140,20 @@ export class RoomView {
       playSfx('pop');
       this.onEvent({ t: 'bookWord', clue });
     };
-    const bg = s.add.rectangle(0, 0, b.w, b.h, b.fill).setStrokeStyle(8, COLORS.ink).setInteractive();
+    const bg = s.add.rectangle(0, 0, b.w, b.h, b.fill).setStrokeStyle(V.look.lineBook, COLORS.ink).setInteractive();
     bg.on('pointerdown', () => {
       playSfx('pop');
       this.onEvent({ t: 'bookOpen' });
     });
-    const plate = s.add.rectangle(0, b.wordY, b.wordW, b.wordH, COLORS.paper).setStrokeStyle(6, COLORS.ink).setInteractive();
+    const plate = s.add.rectangle(0, b.wordY, b.wordW, Math.max(b.wordH, TUNING.minHitPx), COLORS.paper).setStrokeStyle(V.look.lineBold, COLORS.ink).setInteractive();
     plate.on('pointerdown', hear(word));
     root.add([bg, plate, s.add.text(0, b.wordY, word, { fontFamily: FONT_DISPLAY, fontStyle: '800', fontSize: `${b.wordPx}px`, color: CSS.ink }).setOrigin(0.5)]);
-    this.spots.set('book', { x: b.x, y: b.y + b.h / 2 - 24 });
+    this.spots.set('book', { x: b.x, y: b.y + b.h / 2 - V.look.bookHitDy });
     this.spots.set('book_word', { x: b.x, y: b.y + b.wordY });
     const clues = wordDef(word).clues;
     clues.forEach((c, i) => {
       const x = (i - (clues.length - 1) / 2) * 2 * b.clueDx;
-      const tile = s.add.rectangle(x, b.clueY, b.tile, b.tile, COLORS.paper).setStrokeStyle(5, COLORS.ink).setInteractive();
+      const tile = s.add.rectangle(x, b.clueY, b.tile, b.tile, COLORS.paper).setStrokeStyle(V.look.line, COLORS.ink).setInteractive();
       tile.on('pointerdown', hear(c));
       root.add([tile, this.clueIcon(c, x, b.clueY, b.clue)]);
       this.spots.set(`clue_${i}`, { x: b.x + x, y: b.y + b.clueY });
@@ -203,11 +203,11 @@ export class RoomView {
   /** Mimi shows what she knows: the word's own picture (or colour swatch) on a counter. Tapping it is just fun. */
   private stall(word: Parameters<typeof wordDef>[0]): void {
     const c = V.counter;
-    this.add(this.scene.add.rectangle(c.x, c.y, c.w, c.h, COLORS.paper).setStrokeStyle(6, COLORS.ink).setDepth(10));
+    this.add(this.scene.add.rectangle(c.x, c.y, c.w, c.h, COLORS.paper).setStrokeStyle(V.look.lineBold, COLORS.ink).setDepth(10));
     const y = c.y - c.h / 2 - c.itemPx / 2;
     const item: { y: number } & Obj =
       wordDef(word).kind === 'color'
-        ? this.add(this.scene.add.rectangle(c.x, y, c.itemPx * 0.8, c.itemPx * 0.8, SWATCH[word as 'red' | 'yellow' | 'green']).setStrokeStyle(6, COLORS.paper).setDepth(11))
+        ? this.add(this.scene.add.rectangle(c.x, y, c.itemPx * V.look.stallSwatch, c.itemPx * V.look.stallSwatch, SWATCH[word as 'red' | 'yellow' | 'green']).setStrokeStyle(V.look.lineBold, COLORS.paper).setDepth(11))
         : this.add(fitImage(this.scene.add.image(c.x, y, `v2_item_${word}`), c.itemPx).setDepth(11));
     this.text(c.x, c.y, word, c.label, CSS.ink);
     this.tappable(c.x, y, c.itemPx, c.itemPx, `stall_${word}`, item, () => undefined);
@@ -220,10 +220,10 @@ export class RoomView {
     const make = (x: number, door: 'safe' | 'mystery') => {
       if (door === 'mystery') this.add(this.scene.add.ellipse(x, cy, d.glowW, d.glowH, COLORS.sun, d.glowAlpha).setDepth(9));
       const img = this.add(this.scene.add.image(x, d.y, 'v2_door').setOrigin(0.5, 1).setDisplaySize(d.w, d.h).setDepth(10));
-      if (door === 'safe') this.add(fitImage(this.scene.add.image(x, cy - 40, 'v2_chest'), d.icon).setDepth(11));
+      if (door === 'safe') this.add(fitImage(this.scene.add.image(x, cy - V.look.doorIconDy, 'v2_chest'), d.icon).setDepth(11));
       else {
-        this.add(this.scene.add.circle(x, cy - 40, d.badge, COLORS.paper).setStrokeStyle(6, COLORS.ink).setDepth(11));
-        this.text(x, cy - 40, '?', d.badge * 1.4, CSS.ink);
+        this.add(this.scene.add.circle(x, cy - V.look.doorIconDy, d.badge, COLORS.paper).setStrokeStyle(V.look.lineBold, COLORS.ink).setDepth(11));
+        this.text(x, cy - V.look.doorIconDy, '?', d.badge * 1.4, CSS.ink);
       }
       const z = this.tappable(x, cy, d.w, d.h, `door_${door}`, img, () => this.onEvent({ t: 'tapDoor', door }));
       z.input!.enabled = false; // the `doors` effect turns them on
@@ -253,7 +253,7 @@ export class RoomView {
       const iy = k.y - k.h / 2 - k.itemPx / 2;
       const box = this.add(
         this.scene.add.container(x, 0, [
-          this.scene.add.rectangle(0, k.y, k.w, k.h, COLORS.paper).setStrokeStyle(6, COLORS.ink),
+          this.scene.add.rectangle(0, k.y, k.w, k.h, COLORS.paper).setStrokeStyle(V.look.lineBold, COLORS.ink),
           fitImage(this.scene.add.image(0, iy, `v2_item_${f}`), k.itemPx),
         ]).setDepth(10),
       );
@@ -266,7 +266,7 @@ export class RoomView {
     const a = k.ask;
     const mk = (x: number, kind: 'tick' | 'cross', name: string, ev: TripEvent): void => {
       const b = this.add(makeClayButton(this.scene, x, a.y, { w: a.w, h: a.h, variant: 'plain', ariaName: name, onTap: () => this.onEvent(ev) }).setDepth(20));
-      glyph(b, kind, a.glyph, -a.h * 0.05);
+      glyph(b, kind, a.glyph, -a.h * V.look.glyphDy);
       this.spots.set(name.toLowerCase(), { x, y: a.y });
       this.asks.push(b);
     };
@@ -283,9 +283,9 @@ export class RoomView {
   /** Colour clues are swatches, "long" and "round" are drawn shapes, a colour word's clue is its fruit. Never the answer for a fruit word. */
   private clueIcon(c: ClueId, x: number, y: number, size: number): Obj {
     const s = this.scene;
-    if (c === 'yellow' || c === 'orange' || c === 'green') return s.add.rectangle(x, y, size, size, SWATCH[c]).setStrokeStyle(5, COLORS.ink);
-    if (c === 'long') return s.add.rectangle(x, y, size * 0.95, size * 0.36, COLORS.skyLight).setStrokeStyle(5, COLORS.ink);
-    if (c === 'round') return s.add.circle(x, y, size * 0.45, COLORS.skyLight).setStrokeStyle(5, COLORS.ink);
+    if (c === 'yellow' || c === 'orange' || c === 'green') return s.add.rectangle(x, y, size, size, SWATCH[c]).setStrokeStyle(V.look.line, COLORS.ink);
+    if (c === 'long') return s.add.rectangle(x, y, size * V.look.clueLongW, size * V.look.clueLongH, COLORS.skyLight).setStrokeStyle(V.look.line, COLORS.ink);
+    if (c === 'round') return s.add.circle(x, y, size * V.look.clueRound, COLORS.skyLight).setStrokeStyle(V.look.line, COLORS.ink);
     return fitImage(s.add.image(x, y, `v2_item_${c}`), size);
   }
 
@@ -293,7 +293,7 @@ export class RoomView {
   private again(word: WordId): void {
     const g = V.gate.again;
     const b = this.add(makeClayButton(this.scene, g.x, g.y, { w: g.size, h: g.size, variant: 'plain', ariaName: 'Listen again', onTap: () => this.onAgain(word) }).setDepth(20));
-    glyph(b, 'ear', g.glyph, -g.size * 0.05);
+    glyph(b, 'ear', g.glyph, -g.size * V.look.glyphDy);
     this.spots.set('again', { x: g.x, y: g.y });
   }
 
@@ -301,16 +301,16 @@ export class RoomView {
   private robotBubble(word: WordId): void {
     const r = V.robot.bubble;
     const s = this.scene;
-    const g = s.add.graphics().fillStyle(COLORS.paper, 1).lineStyle(6, COLORS.indigo, 1);
+    const g = s.add.graphics().fillStyle(COLORS.paper, 1).lineStyle(V.look.lineBold, COLORS.indigo, 1);
     g.fillEllipse(0, 0, r.w, r.h).strokeEllipse(0, 0, r.w, r.h);
     g.fillTriangle(-r.w * 0.4, r.h * 0.1, -r.w * 0.62, r.h * 0.32, -r.w * 0.28, r.h * 0.3);
     const pic =
       wordDef(word).kind === 'color'
-        ? s.add.rectangle(0, 0, r.pic, r.pic, SWATCH[word as 'red' | 'yellow' | 'green']).setStrokeStyle(6, COLORS.indigo)
+        ? s.add.rectangle(0, 0, r.pic, r.pic, SWATCH[word as 'red' | 'yellow' | 'green']).setStrokeStyle(V.look.lineBold, COLORS.indigo)
         : fitImage(s.add.image(0, 0, `v2_item_${word}`), r.pic);
     const root = this.add(s.add.container(r.x, r.y, [g, pic]).setDepth(12));
     if (reducedMotion()) return;
-    root.setScale(0.8);
+    root.setScale(V.look.popFrom);
     s.tweens.add({ targets: root, scale: 1, duration: r.popMs, ease: 'Back.easeOut' });
   }
 }

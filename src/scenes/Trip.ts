@@ -19,6 +19,7 @@ import { addRotateOverlay, fitImage, makeSpeaker, reducedMotion } from '../view/
 
 const V = TUNING.trip.view;
 const L = TUNING.trip.layout;
+const ENTRY: ReadonlySet<string> = new Set(['gate', 'robot', 'chest']); // rooms whose entry batch may hold one tap (R22)
 const noop = (): void => undefined;
 
 /** `?seed=` (an unsigned integer) makes a trip repeatable; otherwise the clock picks one. core/ never reads the clock. */
@@ -48,6 +49,8 @@ export class Trip extends Phaser.Scene {
   private mapPath!: Phaser.GameObjects.Graphics;
   private idleEv: Phaser.Time.TimerEvent | null = null;
   private revealImg: Phaser.GameObjects.Image | null = null;
+  private pending: TripEvent | null = null; // one card or chest tap made while a room-entry batch ran (R22)
+  private hold = false;
 
   constructor() {
     super('Trip');
@@ -59,6 +62,8 @@ export class Trip extends Phaser.Scene {
     this.batch = 0;
     this.idleEv = null;
     this.revealImg = null;
+    this.pending = null;
+    this.hold = false;
     this.state = undefined;
 
     const { gameW, gameH } = TUNING;
@@ -70,7 +75,7 @@ export class Trip extends Phaser.Scene {
     this.rooms = new RoomView(this, (e) => this.dispatch(e), (w) => this.listenAgain(w));
     this.hud = new Hud(this);
     this.mimi = new Mimi(this, V.mimi.x, V.mimi.y, 'v2_mimi');
-    this.mimi.go.setScale(V.mimi.scale).setDepth(30);
+    this.mimi.go.setScale(V.mimi.scale).setDepth(V.look.mimiDepth);
     this.bubble = new Bubble(this, this.mimi);
     this.cards = new Cards(this, (word) => this.dispatch({ t: 'tapCard', word }));
     this.dialogue = new Dialogue(this, V.dialogue);
@@ -81,6 +86,7 @@ export class Trip extends Phaser.Scene {
     this.game.events.on(Phaser.Core.Events.VISIBLE, this.onVisible, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.left = true;
+      this.pending = null;
       this.speaker.skip(); // resolves a line in flight; the guarded handlers then do nothing
       this.stopIdle();
       this.input.off('pointerdown', this.onPointer, this);
@@ -96,24 +102,34 @@ export class Trip extends Phaser.Scene {
   // ------------------------------------------------------------ event loop
 
   dispatch(e: TripEvent): void {
-    if (this.left || this.busy || !this.state) return; // a tap during effects only skips (onPointer)
+    if (this.left || !this.state) return;
+    if (this.busy) {
+      // A tap during effects skips (onPointer). Only the entry batch of a gate, robot or chest room keeps one card or chest tap; every other batch drops it.
+      if (this.hold && (e.t === 'tapCard' || e.t === 'tapChest')) this.pending = e;
+      return;
+    }
     const before = this.state.phase;
     const r = step(this.state, e);
     this.state = r.state;
     // `effectsDone` that changes nothing would loop forever: stop there.
     if (r.effects.length === 0 && (e.t !== 'effectsDone' || r.state.phase === before)) return;
-    void this.run(r.effects);
+    void this.run(r.effects, r.state.phase !== before && ENTRY.has(r.state.phase));
   }
 
-  private async run(effects: TripEffect[]): Promise<void> {
+  private async run(effects: TripEffect[], hold = false): Promise<void> {
     const batch = ++this.batch;
+    this.pending = null;
+    this.hold = hold;
     this.setBusy(true);
     this.fresh = true;
     queueMicrotask(() => (this.fresh = false));
     await runEffects(effects, this.handlers);
     if (this.left || batch !== this.batch) return; // stale or finished batch: ignore its late completion
     this.setBusy(false);
+    const held = this.pending;
+    this.pending = null;
     if (AUTO_PHASES.has(this.state!.phase)) this.dispatch({ t: 'effectsDone' });
+    else if (held) this.dispatch(held);
     else this.startIdle();
   }
 
@@ -129,7 +145,8 @@ export class Trip extends Phaser.Scene {
     if (!this.mapping) return this.speaker.skip();
     if (this.fast) return;
     this.fast = true;
-    this.tweens.killTweensOf(this.mimi.go); // the walk ends here and finishes again, faster
+    // The walk and its hop run faster and end by themselves (killTweensOf would skip their onStop and leave the hop running).
+    for (const t of [...this.tweens.getTweensOf(this.mimi.go), ...this.tweens.getTweensOf(this.mimi.body)]) t.timeScale = V.mapFast;
   }
 
   // ------------------------------------------------------------ idle clock (spec 6): only in the "?" room, book open or not
@@ -255,14 +272,9 @@ export class Trip extends Phaser.Scene {
       const perMs = TUNING.mimiPxPerSec / 1000;
       const speed = Math.abs(to - from) / (perMs * V.mapMs);
       await this.until(this.mimi.walkTo(to, V.map.y, speed), V.mapMs + TUNING.fallbackPadMs);
-      const rest = Math.abs(to - this.mimi.go.x);
-      if (this.fast && rest > 1) {
-        const ms = rest / (perMs * speed * V.mapFast);
-        await this.until(this.mimi.walkTo(to, V.map.y, speed * V.mapFast), ms + TUNING.fallbackPadMs);
-      }
     } finally {
       this.mapping = false;
-      this.tweens.killTweensOf(this.mimi.go);
+      this.tweens.killTweensOf([this.mimi.go, this.mimi.body]);
       this.mimi.go.x = to;
       this.mimi.body.y = 0;
     }
@@ -312,8 +324,13 @@ export class Trip extends Phaser.Scene {
     save: noop,
     goHome: (e) => {
       this.left = true; // the last effect: nothing may run in this scene after the switch
-      writeTripSave(browserStore(), applyTrip(this.save, this.state!));
-      this.scene.start('Home', { summary: e.summary });
+      try {
+        writeTripSave(browserStore(), applyTrip(this.save, this.state!));
+      } catch (err) {
+        console.error(err);
+      } finally {
+        this.scene.start('Home', { summary: e.summary });
+      }
     },
     hand: (e) =>
       e.words.length
@@ -337,10 +354,10 @@ export class Trip extends Phaser.Scene {
     // The item leaves the thought bubble for the order row. Same path and sound for every item.
     collect: async (e) => {
       const c = V.fx.collect;
-      const img = fitImage(this.add.image(this.mimi.go.x + L.bubble.dx, this.mimi.go.y + L.bubble.dy, `v2_item_${e.item}`), c.px).setDepth(L.depth + 5);
+      const img = fitImage(this.add.image(this.mimi.go.x + L.bubble.dx, this.mimi.go.y + L.bubble.dy, `v2_item_${e.item}`), c.px).setDepth(L.depth + V.look.fxDepth);
       playSfx('pop');
       try {
-        await this.tw({ targets: img, x: c.to.x, y: c.to.y, alpha: 0, scale: img.scale * 0.5, duration: c.ms });
+        await this.tw({ targets: img, x: c.to.x, y: c.to.y, alpha: 0, scale: img.scale * V.look.collectEnd, duration: c.ms });
       } finally {
         img.destroy();
       }
@@ -348,9 +365,9 @@ export class Trip extends Phaser.Scene {
     chest: async (e) => {
       const c = V.fx.chest;
       const at = this.rooms.center('chest') ?? { x: TUNING.gameW / 2, y: TUNING.gameH / 2 };
-      const t = this.add.text(at.x, at.y, `+${e.gears}`, { fontFamily: FONT_DISPLAY, fontStyle: '800', fontSize: `${c.font}px`, color: CSS.sun, stroke: CSS.indigo, strokeThickness: 10 }).setOrigin(0.5).setDepth(L.depth + 5);
+      const t = this.add.text(at.x, at.y, `+${e.gears}`, { fontFamily: FONT_DISPLAY, fontStyle: '800', fontSize: `${c.font}px`, color: CSS.sun, stroke: CSS.indigo, strokeThickness: V.look.textStroke }).setOrigin(0.5).setDepth(L.depth + V.look.fxDepth);
       playSfx('pop');
-      burst(this, at.x, at.y, c.stars, TUNING.celebrate.color, c.inner, c.outer, c.rx, c.ry, c.starMs);
+      if (!reducedMotion()) burst(this, at.x, at.y, c.stars, TUNING.celebrate.color, c.inner, c.outer, c.rx, c.ry, c.starMs);
       try {
         await this.tw({ targets: t, y: at.y - c.rise, duration: c.ms });
         await this.wait(c.holdMs);
@@ -361,7 +378,7 @@ export class Trip extends Phaser.Scene {
     reveal: (e) => {
       this.clearReveal();
       const r = V.fx.reveal;
-      const img = fitImage(this.add.image(r.x, r.y, `v2_item_${e.item}`), r.px).setDepth(L.depth + 5);
+      const img = fitImage(this.add.image(r.x, r.y, `v2_item_${e.item}`), r.px).setDepth(L.depth + V.look.fxDepth);
       this.revealImg = img;
       playSfx('pop');
       if (reducedMotion()) return;
@@ -371,7 +388,7 @@ export class Trip extends Phaser.Scene {
     },
     sleep: async () => {
       const s = V.fx.sleep;
-      const cart = fitImage(this.add.image(-s.cartPx, s.y, 'v2_cart').setOrigin(0.5, 1), s.cartPx).setDepth(25);
+      const cart = fitImage(this.add.image(-s.cartPx, s.y, 'v2_cart').setOrigin(0.5, 1), s.cartPx).setDepth(V.look.cartDepth);
       const off = TUNING.gameW + s.cartPx;
       try {
         await this.tw({ targets: cart, x: this.mimi.go.x, duration: s.inMs });
@@ -387,13 +404,14 @@ export class Trip extends Phaser.Scene {
       playSfx('sparkle');
       if (e.size === 'small') {
         const s = V.fx.small;
-        burst(this, x, hy, s.stars, TUNING.celebrate.color, s.inner, s.outer, s.rx, s.ry, s.ms);
+        if (!reducedMotion()) burst(this, x, hy, s.stars, TUNING.celebrate.color, s.inner, s.outer, s.rx, s.ry, s.ms);
         return this.hop(s.hopPx, s.hopMs, 0);
       }
       const c = TUNING.celebrate;
       const f = TUNING.fireworks;
-      burst(this, x, hy, c.stars, c.color, c.inner, c.outer, c.rx, c.ry, TUNING.celebrateMs);
-      for (const [dx, dy, color, delay] of f.shots) {
+      const motion = !reducedMotion();
+      if (motion) burst(this, x, hy, c.stars, c.color, c.inner, c.outer, c.rx, c.ry, TUNING.celebrateMs);
+      for (const [dx, dy, color, delay] of motion ? f.shots : []) {
         this.time.delayedCall(delay, () => {
           if (this.left) return;
           playSfx('sparkle');

@@ -200,6 +200,8 @@ export const TUNING = {
         hop: { px: 40, ms: 160, repeat: 2 }, // B, the basic joke when no fruit joke applies
         small: { stars: 6, inner: 5, outer: 12, rx: 150, ry: 110, ms: 500, hopPx: 20, hopMs: 140 }, // B, a right item: smaller than the big peak (GDD 2)
       },
+      // Drawing constants that were literals in the room, Mimi and fx code. B, look only.
+      look: { floorAlpha: 0.14, line: 5, lineBold: 6, lineBook: 8, doorIconDy: 40, stallSwatch: 0.8, clueLongW: 0.95, clueLongH: 0.36, clueRound: 0.45, popFrom: 0.8, bookHitDy: 24, glyphDy: 0.05, textStroke: 10, collectEnd: 0.5, mimiDepth: 30, cartDepth: 25, fxDepth: 5 },
       bounce: { px: 24, ms: 120 }, // B, optional tap fun
     },
   },
