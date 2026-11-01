@@ -1,11 +1,11 @@
 # Handoff
 
 ## 1. Hiện trạng
-Spec MVP đã được founder duyệt. Plan đã viết, chờ founder duyệt và chọn cách chạy. Chưa có code. Chưa có repo GitHub và tài khoản Cloudflare.
+Spec MVP và plan đã được founder duyệt. Cách chạy: subagent-driven. Chưa có code. Chưa có repo GitHub và tài khoản Cloudflare.
 
 ## 2. Tiếp theo
-1. Founder duyệt [plan](superpowers/plans/2026-11-01-day-1-apple-mvp.md) và chọn cách chạy.
-2. Làm trong Claude Code CLI, mở tại folder này, theo từng batch A → D.
+1. Chạy [plan](superpowers/plans/2026-11-01-day-1-apple-mvp.md) trong Claude Code CLI, mở tại folder này, bằng `superpowers:subagent-driven-development`, theo batch A → D.
+2. Founder chơi thử ở Task 10, rồi tự quyết việc push và deploy ở Task 12.
 
 ## 3. Đang chờ từ người khác
 | Ai | Việc | Có chặn không |
