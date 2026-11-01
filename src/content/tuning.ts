@@ -17,7 +17,7 @@ export const TUNING = {
   tapFeedbackMs: 100, // A: Nielsen 1993
   walkSpeed: 1, // B, multiplier of the view's base walking speed (1 = as drawn)
   repeatTripSpeed: 2, // B, same multiplier from the 2nd carry (spec 5.1)
-  pitch: { mimi: 1.35, mom: 1.05, npc: 0.9, kid: 1.2, book: 1.0 }, // B, tune by ear
+  pitch: { mimi: 1.35, mom: 1.05, npc: 0.9, kid: 1.2, book: 1.0, robot: 1.25, cashier: 0.95 }, // B, tune by ear
   tapDebounceMs: 400, // B, double tap counts once (spec 9)
   pressScale: 0.94, // B
   mimiPxPerSec: 320, // B, base walking speed before walkSpeed
@@ -110,6 +110,18 @@ export const TUNING = {
     gateMin: 6, gateMax: 9, // times table range (spec 11)
     confirm: { w: 1000, h: 480, askFont: 44, btnY: 590, btnW: 300, btnGap: 200 },
     btnFont: 34,
+  },
+  // Trip numbers (spec 14).
+  trip: {
+    batteryMax: 3, // B
+    stallAutoMs: 1800, // B
+    handSize: 3, // B
+    gearsPerItem: 1, // B
+    gearsNewWord: 3, // B
+    chestGears: [1, 2], // B
+    bigChestGears: [3, 4], // B
+    patternB: 3, // B
+    patternC: 5, // B
   },
   markTag: { scale: 0.2, dy: 50, angle: 14, ms: 140, repeat: 3 }, // B, Mimi head on a rejected stall
 } as const;

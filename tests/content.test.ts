@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { LINES, type LineId } from '../src/content/lines';
+import { LINES, wordLine, oopsLine, type LineId, type WordLineKey } from '../src/content/lines';
+import { WORDS } from '../src/content/words';
 import { NPC_ELIMINATE_ORDER, RECALL_FRUITS, heardLine, npcLine } from '../src/content/fruits';
 import { TUNING } from '../src/content/tuning';
 import { RECORDED } from '../src/content/audio-manifest';
@@ -43,6 +44,24 @@ describe('content', () => {
     expect(npcLine('grape')).toBe('npc.grape');
     expect(LINES['npc.grape'].en).toBe('Can I have some grapes, please?');
     expect(RECALL_FRUITS).toEqual(['apple', 'banana', 'grape']);
+  });
+  it('per-word lines exist', () => {
+    const kinds: WordLineKey[] = ['ask', 'yes', 'no', 'npc', 'ok', 'this', 'give', 'mem'];
+    for (const w of WORDS) for (const k of kinds) expect(LINES[wordLine(k, w.id)], `${k}.${w.id}`).toBeDefined();
+    for (const w of WORDS) for (const f of FRUITS) expect(LINES[oopsLine(w.id, f)], `${w.id}/${f}`).toBeDefined();
+    for (const c of ['red', 'yellow', 'orange', 'green']) expect(LINES, `oopsc.${c}`).toHaveProperty(`oopsc.${c}`);
+  });
+  it('word line wording', () => {
+    const en = (id: LineId) => LINES[id].en;
+    expect(en('ask.orange')).toBe('Is this an orange?');
+    expect(en('ask.red')).toBe('Is this red?');
+    expect(en('give.red')).toBe('Give me a red one!');
+    expect(en('oopsc.yellow')).toBe('Oh! This is yellow!');
+    expect(en('this.orange')).toBe('This is an orange!');
+    expect(en('npc.red')).toBe('Can I have a red one, please?');
+    expect(en('mem.banana')).toBe('Banana! I remember!');
+    expect(en('yes.orange')).toBe('Yes, this is an orange.');
+    expect(en('no.orange')).toBe('No, this is not an orange.');
   });
   it('tuning and manifest', () => {
     expect(TUNING.gameW).toBe(1672);

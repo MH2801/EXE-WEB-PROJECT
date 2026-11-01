@@ -1,10 +1,13 @@
+import type { FruitId, WordId } from '../core/types';
+import { ITEM_COLOR, WORDS } from './words';
+
 export type Line = {
-  speaker: 'mom' | 'mimi' | 'npc' | 'kid' | 'book';
+  speaker: 'mom' | 'mimi' | 'npc' | 'kid' | 'book' | 'robot' | 'cashier';
   en: string;
   vi: string;
 };
 
-export const LINES = {
+const DAY1_LINES = {
   'mom.ask': { speaker: 'mom', en: 'Can you get an apple for me?', vi: 'Con lấy giúp mẹ quả táo nhé?' },
   'mom.again': { speaker: 'mom', en: "Oh, this isn't an apple. Please try again for me.", vi: 'Ôi, đây không phải táo. Con thử lại giúp mẹ nhé.' },
   'mom.thanks': { speaker: 'mom', en: 'Thank you!', vi: 'Cảm ơn con!' },
@@ -42,9 +45,70 @@ export const LINES = {
   'book.apple': { speaker: 'book', en: 'apple', vi: 'táo' },
   'book.red': { speaker: 'book', en: 'red', vi: 'đỏ' },
   'book.round': { speaker: 'book', en: 'round', vi: 'tròn' },
+  // Trip lines (spec 8), shared.
+  'mom.list': { speaker: 'mom', en: 'Please get these for me!', vi: 'Con lấy giúp mẹ mấy món này nhé!' },
+  'mom.done': { speaker: 'mom', en: 'Thank you, Mimi!', vi: 'Cảm ơn con, Mimi!' },
+  'mimi.know_this': { speaker: 'mimi', en: 'I know this one!', vi: 'Tớ biết cái này!' },
+  'mimi.what_this': { speaker: 'mimi', en: 'Hmm… what is this?', vi: 'Ừm… đây là gì nhỉ?' },
+  'mimi.go': { speaker: 'mimi', en: "Let's go!", vi: 'Đi thôi!' },
+  'mimi.open': { speaker: 'mimi', en: 'Open, please!', vi: 'Mở giúp tớ với!' },
+  'mimi.sleepy': { speaker: 'mimi', en: 'So sleepy…', vi: 'Buồn ngủ quá…' },
+  'mimi.remember_v2': { speaker: 'mimi', en: 'I remember!', vi: 'Tớ nhớ rồi!' },
+  'robot.yum': { speaker: 'robot', en: 'Yum! Thank you!', vi: 'Ngon quá! Cảm ơn cậu!' },
+  'robot.hee': { speaker: 'robot', en: 'Hee hee! Not this one!', vi: 'Hi hi! Không phải cái này!' },
 } as const satisfies Record<string, Line>;
 
+export type WordLineKey = 'ask' | 'yes' | 'no' | 'npc' | 'ok' | 'this' | 'give' | 'mem';
+type Colour = 'red' | 'yellow' | 'orange' | 'green';
+// npc.<fruit> already exists from Day 1, so only the colour words get a generated npc line.
+type GenId =
+  | `${Exclude<WordLineKey, 'npc'>}.${WordId}`
+  | `npc.${'red' | 'yellow' | 'green'}`
+  | `oops.${FruitId}`
+  | `oopsc.${Colour}`;
+
+const NAME_VI: Record<WordId | 'orangeColour', string> = {
+  apple: 'táo', banana: 'chuối', orange: 'cam', lemon: 'chanh', grape: 'nho',
+  red: 'đỏ', yellow: 'vàng', green: 'xanh lá', orangeColour: 'cam',
+};
+const ART: Record<FruitId, string> = { apple: 'an apple', banana: 'a banana', orange: 'an orange', lemon: 'a lemon', grape: 'a grape' };
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+function genWordLines(): Record<GenId, Line> {
+  const out: Record<string, Line> = {};
+  const add = (id: string, speaker: Line['speaker'], en: string, vi: string) => { out[id] = { speaker, en, vi }; };
+  for (const { id, kind } of WORDS) {
+    const f = kind === 'fruit';
+    const phrase = f ? ART[id as FruitId] : id; // "an apple" / "red"
+    const vi = NAME_VI[id];
+    const viN = f ? vi : `màu ${vi}`;
+    add(`ask.${id}`, 'mimi', `Is this ${phrase}?`, `Đây là ${viN} à?`);
+    add(`yes.${id}`, 'kid', `Yes, this is ${phrase}.`, `Vâng, đây là ${viN}.`);
+    add(`no.${id}`, 'kid', `No, this is not ${phrase}.`, `Không, đây không phải ${viN}.`);
+    add(`ok.${id}`, 'cashier', `Yes! ${cap(phrase)}!`, `Đúng rồi! ${cap(viN)}!`);
+    add(`this.${id}`, 'cashier', `This is ${phrase}!`, `Đây là ${viN}!`);
+    add(`give.${id}`, 'robot', f ? `Give me ${phrase}!` : `Give me a ${id} one!`, f ? `Đưa tớ ${vi} nào!` : `Đưa tớ món ${viN} nào!`);
+    add(`mem.${id}`, 'mimi', `${cap(f ? id : phrase)}! I remember!`, `${cap(viN)}! Tớ nhớ rồi!`);
+    if (!f) add(`npc.${id}`, 'npc', `Can I have a ${id} one, please?`, `Cho tôi món ${viN} nhé?`);
+    if (f) add(`oops.${id}`, 'cashier', `Oh! This is ${phrase}!`, `Ồ! Đây là ${vi}!`);
+  }
+  for (const c of ['red', 'yellow', 'orange', 'green'] as const) {
+    add(`oopsc.${c}`, 'cashier', `Oh! This is ${c}!`, `Ồ! Đây là màu ${NAME_VI[c === 'orange' ? 'orangeColour' : c]}!`);
+  }
+  return out as Record<GenId, Line>;
+}
+
+export const LINES: typeof DAY1_LINES & Record<GenId, Line> = { ...DAY1_LINES, ...genWordLines() };
+
 export type LineId = keyof typeof LINES;
+
+export function wordLine(kind: WordLineKey, w: WordId): LineId {
+  return `${kind}.${w}` as LineId;
+}
+
+export function oopsLine(w: WordId, item: FruitId): LineId {
+  return (w === 'red' || w === 'yellow' || w === 'green' ? `oopsc.${ITEM_COLOR[item]}` : `oops.${item}`) as LineId;
+}
 
 /** Words printed on buttons and the book; the game is playable without reading them. */
 export const LABELS = { yes: 'Yes', no: 'No', apple: 'APPLE' } as const;
