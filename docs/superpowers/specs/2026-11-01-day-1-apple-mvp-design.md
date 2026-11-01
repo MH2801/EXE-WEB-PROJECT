@@ -346,6 +346,9 @@ Theo Numbers Policy của skill `game-design`. A: có nguồn. B: giá trị kh�
 | Âm hiệu ứng (pop, sparkle, boing) | âm lượng 0,08; nốt 45 / 70 / 60 ms; cao độ chỉ đứng yên hoặc đi lên; xem khối `sfx` trong `tuning.ts` | B, chỉnh bằng tai. Không đi xuống là luật cứng (§9), có test | Nghe nhỏ hơn giọng đọc, không chói | Giảm âm lượng |
 | Cảnh hài theo quả và ăn mừng | mỗi cảnh hài tối đa 2,6 giây (khoảng 1,4 đến 1,8 giây); giảm chuyển động: giữ 0,7 giây; pháo hoa chỉ ở "Thank you!"; xem khối `jokes`, `celebrate`, `fireworks` trong `tuning.ts` | B, chỉnh bằng mắt | Founder chơi thử: bé cười, cảnh không dài hơn câu thoại sau | Rút ngắn cảnh |
 | Số của My Memory và Khu phụ huynh: vị trí ô, che chữ, cỡ chữ, thời gian hiện apple, dãy nhân của cổng | xem khối `memory` và `parent` trong `tuning.ts` | B, chỉnh bằng mắt | Founder xem: chữ rõ, bấm trúng | Chỉnh số trong `tuning.ts` |
+| Cỡ chữ tiếng Anh khi khung thoại phải xuống hai dòng | 40 px (`dialogue.enWrapPx`) | B | Bé và người lớn đọc được cả hai dòng | Tăng hoặc giảm |
+| Icon Sổ nhiệm vụ: bìa, trang, gáy, dòng chữ | khối `book.icon` trong `tuning.ts` | B, chỉnh bằng mắt | Founder xem: icon giống quyển sách | Chỉnh số trong `tuning.ts` |
+| Ngôi sao nổ của cảnh hài | 5 cánh, độ sâu 70, độ sâu quả 55 (`burst`) | B, chỉnh bằng mắt | Founder chơi thử: nổ rõ, không che chữ | Chỉnh số trong `tuning.ts` |
 | Tổng dung lượng tải | ≤ 12 MB | B | `dist/` sau build | Nén hình mạnh hơn |
 
 ## 15. Hình và tài sản
