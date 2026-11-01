@@ -1,0 +1,19 @@
+{
+  "enabledPlugins": {
+    "andrej-karpathy-skills@karpathy-skills": true,
+    "superpowers@anthropic-plugin-directory": true,
+    "frontend-design@anthropic-plugin-directory": true,
+    "claude-md-management@anthropic-plugin-directory": true,
+    "ponytail@ponytail": true
+  },
+  "env": {
+    "PONYTAIL_DEFAULT_MODE": "full"
+  },
+  "permissions": {
+    "deny": [
+      "Read(./node_modules/**)",
+      "Read(./dist/**)",
+      "Read(./docs/source/day-1-storyboard.pdf)"
+    ]
+  }
+}
