@@ -248,7 +248,7 @@ Tất cả là giá trị khởi đầu (B), nằm trong `tuning.ts`. Cách ki�
 | Tên | Giá trị | Chỉnh khi |
 |---|---|---|
 | `batteryMax` | 3 | Không ai lo về pin thì giảm còn 2; hết pin thường xuyên thì tăng |
-| `stallAutoMs` | 1800 | Thấy chờ lâu thì giảm |
+| `stallAutoMs` | 900 | Thấy chờ lâu thì giảm |
 | `idleMs` | 25000 | Giữ nguyên từ Day 1 |
 | `suspenseMs` | 1200 | Giữ nguyên từ Day 1 |
 | `minHitPx` | 120 | Giữ nguyên từ Day 1 |

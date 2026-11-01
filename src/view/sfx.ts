@@ -7,8 +7,11 @@ export const SFX_NOTES: Record<Sfx, readonly number[]> = TUNING.sfx.notes;
 
 let ctx: AudioContext | null = null;
 
-/** Quiet blip. Silent, and never throws, where WebAudio is missing or blocked. */
-export function playSfx(s: Sfx): void {
+/** Pitch multipliers for sounds repeated in a row: a rising scale, so a run of items climbs (GDD 9) and never falls. */
+export const SFX_RISE: readonly number[] = TUNING.sfx.rise;
+
+/** Quiet blip. Silent, and never throws, where WebAudio is missing or blocked. `rise` = how many came before it in a row. */
+export function playSfx(s: Sfx, rise = 0): void {
   try {
     if (typeof AudioContext === 'undefined') return;
     ctx ??= new AudioContext();
@@ -21,7 +24,8 @@ export function playSfx(s: Sfx): void {
     const osc = ctx.createOscillator();
     const amp = ctx.createGain();
     osc.type = wave[s];
-    notes.forEach((hz, i) => osc.frequency.setValueAtTime(hz, t0 + i * step));
+    const k = SFX_RISE[Math.min(rise, SFX_RISE.length - 1)]!;
+    notes.forEach((hz, i) => osc.frequency.setValueAtTime(hz * k, t0 + i * step));
     amp.gain.setValueAtTime(0.0001, t0);
     amp.gain.exponentialRampToValueAtTime(gain, t0 + attackMs / 1000);
     amp.gain.exponentialRampToValueAtTime(0.0001, end);

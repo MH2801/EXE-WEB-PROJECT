@@ -6,28 +6,24 @@ import type { Room, TeachRoom } from '../core/tripgen';
 import type { FruitId, WordId } from '../core/types';
 import { playSfx } from './sfx';
 import { COLORS, CSS, FONT_DISPLAY } from './theme';
-import { fitImage, makeClayButton, reducedMotion } from './ui';
+import { drawGlyph, fitImage, inviteLoop, makeClayButton, reducedMotion, type InviteItem } from './ui';
 
 const V = TUNING.trip.view;
+export type Tw = (cfg: Phaser.Types.Tweens.TweenBuilderConfig) => Promise<void>;
+export type InviteKind = 'door' | 'stall' | 'ask' | 'chest';
+type Hideable = { setVisible(v: boolean): unknown };
+
+/** The cashier's lean and Mimi's held breath run on this one clock: in, hold, back, done before the verdict (suspenseMs never changes). */
+export function leanTiming(): { duration: number; hold: number } {
+  const duration = reducedMotion() ? 1 : V.cashier.leanMs;
+  return { duration, hold: TUNING.suspenseMs - V.cashier.settleMs - 2 * duration };
+}
 const SWATCH = TUNING.trip.layout.swatch;
 type Spot = { x: number; y: number };
 type Shown = Room | { kind: 'teach'; teach: TeachRoom } | { kind: 'chest'; big: boolean };
 type Obj = Phaser.GameObjects.GameObject;
 type Box = Phaser.GameObjects.Container;
 type Stall = { box: Box; zone: Phaser.GameObjects.Zone; marked: boolean; x: number; y: number };
-
-/** A plain drawn icon on a clay button's raised face (its second child). Ink only: no colour says yes or no. */
-function glyph(btn: Box, kind: 'tick' | 'cross' | 'ear', s: number, dy: number): void {
-  const g = btn.scene.add.graphics().lineStyle(s * 0.14, COLORS.ink, 1).fillStyle(COLORS.ink, 1).setY(dy);
-  if (kind === 'tick') g.beginPath().moveTo(-0.34 * s, 0).lineTo(-0.1 * s, 0.24 * s).lineTo(0.36 * s, -0.26 * s).strokePath();
-  else if (kind === 'cross') g.beginPath().moveTo(-0.28 * s, -0.28 * s).lineTo(0.28 * s, 0.28 * s).moveTo(0.28 * s, -0.28 * s).lineTo(-0.28 * s, 0.28 * s).strokePath();
-  else {
-    g.beginPath().moveTo(-0.38 * s, -0.14 * s).lineTo(-0.18 * s, -0.14 * s).lineTo(0.06 * s, -0.34 * s).lineTo(0.06 * s, 0.34 * s).lineTo(-0.18 * s, 0.14 * s).lineTo(-0.38 * s, 0.14 * s).closePath().fillPath();
-    g.beginPath().arc(0.06 * s, 0, 0.26 * s, -0.9, 0.9).strokePath();
-    g.beginPath().arc(0.06 * s, 0, 0.46 * s, -0.9, 0.9).strokePath();
-  }
-  (btn.list[1] as Box).add(g);
-}
 
 /**
  * The room behind Mimi. It only draws what the core sent; it never reads a word's answer, so nothing here can hint at right or wrong.
@@ -36,7 +32,16 @@ export class RoomView {
   private objs: Obj[] = [];
   private spots = new Map<string, Spot>();
   private doors: Phaser.GameObjects.Zone[] = [];
-  private cashier: Phaser.GameObjects.Image | null = null;
+  private doorItems: InviteItem[] = [];
+  private chosen: { img: Phaser.GameObjects.Image; parts: Hideable[] } | null = null; // the door just tapped
+  private npc: Phaser.GameObjects.Image | null = null; // who stands in the room
+  private npcY = 0;
+  private extras: Hideable[] = []; // leave with the npc
+  private talkTw: Phaser.Tweens.Tween | null = null;
+  private leanTw: Phaser.Tweens.Tween | null = null;
+  private lid: { lid: Phaser.GameObjects.Image; img: Phaser.GameObjects.Image; mouthY: number } | null = null;
+  private pics = new Map<string, Hideable>(); // pictures Mimi can take
+  private stopInvite: (() => void) | null = null;
   private stalls = new Map<FruitId, Stall>();
   private stallsOn = false;
   private picked: FruitId | null = null; // the stall Mimi is asking about stays lit, right or wrong
@@ -50,10 +55,7 @@ export class RoomView {
   ) {}
 
   show(room: Shown): void {
-    this.hide();
-    const { gameW: w, gameH: h } = TUNING;
-    this.add(this.scene.add.rectangle(w / 2, h / 2, w, h, COLORS.indigo).setDepth(0));
-    this.add(this.scene.add.rectangle(w / 2, V.floor.y + V.floor.h / 2, w, V.floor.h, COLORS.paper, V.look.floorAlpha).setDepth(1));
+    this.stage();
     switch (room.kind) {
       case 'stall':
         return this.stall(room.word);
@@ -67,19 +69,45 @@ export class RoomView {
         return this.teach(room.teach);
       case 'gate':
       case 'robot':
-        this.add(fitImage(this.scene.add.image(V.npc.x, V.npc.y, `v2_${room.kind}`).setOrigin(0.5, 1), V.npc.px).setDepth(10));
-        return room.kind === 'gate' ? this.again(room.word) : this.robotBubble(room.word);
+        this.stand(`v2_${room.kind}`, V.npc);
+        return room.kind === 'gate' ? this.again(room.word) : this.robotRoom(room.word);
     }
   }
 
+  /** The trip opens with Mom holding the list: who asks, and for what. */
+  showMom(): void {
+    this.stage();
+    this.stand('v2_mom', V.mom);
+  }
+
+  private stage(): void {
+    this.hide();
+    const { gameW: w, gameH: h } = TUNING;
+    this.add(this.scene.add.rectangle(w / 2, h / 2, w, h, COLORS.indigo).setDepth(0));
+    this.add(this.scene.add.rectangle(w / 2, V.floor.y + V.floor.h / 2, w, V.floor.h, COLORS.paper, V.look.floorAlpha).setDepth(1));
+  }
+
+  private stand(key: string, c: { x: number; y: number; px: number }): void {
+    this.npc = this.add(fitImage(this.scene.add.image(c.x, c.y, key).setOrigin(0.5, 1), c.px).setDepth(10));
+    this.npcY = c.y;
+    this.spots.set('source', { x: c.x, y: c.y - this.npc.displayHeight / 2 });
+  }
+
   hide(): void {
+    this.endInvite();
     for (const o of this.objs) {
       this.scene.tweens.killTweensOf(o);
       o.destroy();
     }
     this.objs = [];
     this.doors = [];
-    this.cashier = null;
+    this.doorItems = [];
+    this.chosen = null;
+    this.npc = null;
+    this.extras = [];
+    this.talkTw = this.leanTw = null;
+    this.lid = null;
+    this.pics.clear();
     this.stalls.clear();
     this.stallsOn = false;
     this.picked = null;
@@ -171,11 +199,85 @@ export class RoomView {
     return this.spots.get(name) ?? null;
   }
 
-  /** The robot leans toward Mimi and holds it through the `wait` that follows. It resolves nothing: the pause is the wait alone. */
+  /** Where a collected item starts: its stall, or what stands in the room. Mimi takes the picture off a stall. */
+  take(item: FruitId): Spot | null {
+    (this.pics.get(`stall_${item}`) ?? this.pics.get('source'))?.setVisible(false);
+    return this.spots.get(`stall_${item}`) ?? this.spots.get('source') ?? null;
+  }
+
+  /** The cashier leans toward Mimi and is back upright by the verdict, right or wrong. It resolves nothing: the pause is the wait alone. */
   cashierLook(): void {
-    const c = this.cashier;
-    if (!c || reducedMotion()) return;
-    this.scene.tweens.add({ targets: c, angle: V.cashier.leanDeg, y: c.y + V.cashier.leanPx, duration: V.cashier.leanMs, yoyo: true, hold: TUNING.suspenseMs });
+    const c = this.npc;
+    if (!c) return;
+    this.leanTw?.remove(); // never two leans on the next item (M5)
+    c.setAngle(0).setY(this.npcY);
+    this.leanTw = this.scene.tweens.add({ targets: c, angle: V.cashier.leanDeg, y: c.y + V.cashier.leanPx, yoyo: true, ...leanTiming() });
+  }
+
+  /** Whoever stands in the room bobs while its line plays, so a child sees who speaks. */
+  talk(on: boolean): void {
+    this.talkTw?.remove();
+    this.talkTw = null;
+    const n = this.npc;
+    if (!n) return;
+    n.y = this.npcY;
+    if (on && !reducedMotion()) this.talkTw = this.scene.tweens.add({ targets: n, y: n.y - V.talk.px, duration: V.talk.ms, yoyo: true, repeat: -1 });
+  }
+
+  /** The way opens: the gate rolls up, the robot hops off. */
+  clearPath(tw: Tw): Promise<void> {
+    const n = this.npc;
+    if (!n) return Promise.resolve();
+    this.scene.tweens.killTweensOf(n);
+    n.setAngle(0).setY(this.npcY);
+    for (const o of this.extras) o.setVisible(false);
+    if (n.texture.key !== 'v2_gate') return tw({ targets: n, x: n.x + V.robot.aside, duration: V.robot.asideMs, ease: 'Back.easeIn' });
+    n.setOrigin(0.5, 0).setY(n.y - n.displayHeight);
+    return tw({ targets: n, scaleY: n.scaleY * V.gate.liftTo, alpha: 0, duration: V.gate.liftMs, ease: 'Quad.easeIn' });
+  }
+
+  /** The tapped door shakes a little, then swings open with light behind it (GDD 9). */
+  async openDoor(tw: Tw): Promise<void> {
+    const d = this.chosen;
+    if (!d) return;
+    const k = V.door;
+    await tw({ targets: d.img, angle: { from: -k.shakeDeg, to: k.shakeDeg }, duration: k.shakeMs, yoyo: true, repeat: k.shakes });
+    d.img.setAngle(0).setOrigin(0, 1).setX(d.img.x - k.w / 2);
+    for (const p of d.parts) p.setVisible(false);
+    const light = this.add(this.scene.add.ellipse(d.img.x + k.w / 2, k.y - k.h / 2, k.w * k.lightW, k.h * k.lightH, COLORS.sun).setDepth(9));
+    playSfx('pop');
+    await Promise.all([
+      tw({ targets: d.img, scaleX: d.img.scaleX * k.openX, duration: k.openMs, ease: 'Quad.easeOut' }),
+      tw({ targets: light, scale: k.lightScale, alpha: k.lightAlpha, duration: k.openMs }),
+    ]);
+  }
+
+  /** Anticipation, then the lid jumps open on a glow. Reduced motion lands on the open chest. */
+  async openChest(tw: Tw): Promise<void> {
+    if (!this.lid) return;
+    const { lid, img, mouthY } = this.lid;
+    const c = V.chest;
+    await tw({ targets: [img, lid], x: { from: c.x - c.shakePx, to: c.x + c.shakePx }, duration: c.shakeMs, yoyo: true, repeat: c.shakes });
+    img.x = lid.x = c.x;
+    this.add(this.scene.add.ellipse(c.x, mouthY, img.displayWidth * c.glowW, img.displayHeight * c.glowH, COLORS.sun).setDepth(10));
+    playSfx('pop');
+    await tw({ targets: lid, y: lid.y - c.lidRise, angle: c.lidDeg, duration: c.openMs, ease: 'Back.easeOut' });
+  }
+
+  invite(kind: InviteKind): void {
+    this.endInvite();
+    const k = V.teach;
+    const items: InviteItem[] =
+      kind === 'door' ? this.doorItems
+      : kind === 'stall' ? [...this.stalls.values()].filter((s) => !s.marked).map((s) => ({ objs: [s.box], x: s.x, top: s.y - k.itemPx / 2 }))
+      : kind === 'ask' ? this.asks.map((b) => ({ objs: [b], x: b.x, top: k.ask.y - k.ask.h / 2 }))
+      : this.lid ? [{ objs: [this.lid.img, this.lid.lid], x: V.chest.x, top: this.lid.img.y - this.lid.img.displayHeight }] : [];
+    this.stopInvite = inviteLoop(this.scene, items);
+  }
+
+  endInvite(): void {
+    this.stopInvite?.();
+    this.stopInvite = null;
   }
 
   private add<T extends Obj>(o: T): T {
@@ -183,15 +285,16 @@ export class RoomView {
     return o;
   }
 
-  private bounce(o: { y: number }): void {
-    if (!reducedMotion()) this.scene.tweens.add({ targets: o, y: o.y - V.bounce.px, duration: V.bounce.ms, yoyo: true });
+  private bounce(o: object): void {
+    if (!reducedMotion()) this.scene.tweens.add({ targets: o, y: `-=${V.bounce.px}`, duration: V.bounce.ms, yoyo: true });
   }
 
   /** A tap area with the same feedback everywhere: pop and a bounce. */
-  private tappable(x: number, y: number, w: number, h: number, name: string, bounceTarget: { y: number }, onTap: () => void): Phaser.GameObjects.Zone {
+  private tappable(x: number, y: number, w: number, h: number, name: string, bounceTarget: object, onTap: () => void): Phaser.GameObjects.Zone {
     const z = this.add(this.scene.add.zone(x, y, Math.max(w, TUNING.minHitPx), Math.max(h, TUNING.minHitPx)).setDepth(20).setInteractive());
     this.spots.set(name, { x, y });
     z.on('pointerdown', () => {
+      this.endInvite();
       playSfx('pop');
       this.bounce(bounceTarget);
       onTap();
@@ -208,29 +311,35 @@ export class RoomView {
     const c = V.counter;
     this.add(this.scene.add.rectangle(c.x, c.y, c.w, c.h, COLORS.paper).setStrokeStyle(V.look.lineBold, COLORS.ink).setDepth(10));
     const y = c.y - c.h / 2 - c.itemPx / 2;
-    const item: { y: number } & Obj =
+    const item: { y: number } & Obj & Hideable =
       wordDef(word).kind === 'color'
         ? this.add(this.scene.add.rectangle(c.x, y, c.itemPx * V.look.stallSwatch, c.itemPx * V.look.stallSwatch, SWATCH[word as 'red' | 'yellow' | 'green']).setStrokeStyle(V.look.lineBold, COLORS.paper).setDepth(11))
         : this.add(fitImage(this.scene.add.image(c.x, y, `v2_item_${word}`), c.itemPx).setDepth(11));
     this.text(c.x, c.y, word, c.label, CSS.ink);
     this.tappable(c.x, y, c.itemPx, c.itemPx, `stall_${word}`, item, () => undefined);
+    this.spots.set('source', { x: c.x, y });
+    this.pics.set('source', item);
   }
 
-  /** Two doors of the same size and the same tap area (GDD 6). The "?" door glows (Sun) and has a badge; the other shows a chest. */
+  /** Two doors of the same size, tap area and badge (GDD 6). The "?" door also glows (Sun, clear of the dialogue box); the other shows a chest. */
   private fork(): void {
     const d = V.door;
     const cy = d.y - d.h / 2;
     const make = (x: number, door: 'safe' | 'mystery') => {
-      if (door === 'mystery') this.add(this.scene.add.ellipse(x, cy, d.glowW, d.glowH, COLORS.sun, d.glowAlpha).setDepth(9));
+      if (door === 'mystery') this.add(this.scene.add.ellipse(x, cy + d.glowDy, d.glowW, d.glowH, COLORS.sun, d.glowAlpha).setDepth(9));
       const img = this.add(this.scene.add.image(x, d.y, 'v2_door').setOrigin(0.5, 1).setDisplaySize(d.w, d.h).setDepth(10));
-      if (door === 'safe') this.add(fitImage(this.scene.add.image(x, cy - V.look.doorIconDy, 'v2_chest'), d.icon).setDepth(11));
-      else {
-        this.add(this.scene.add.circle(x, cy - V.look.doorIconDy, d.badge, COLORS.paper).setStrokeStyle(V.look.lineBold, COLORS.ink).setDepth(11));
-        this.text(x, cy - V.look.doorIconDy, '?', d.badge * 1.4, CSS.ink);
-      }
-      const z = this.tappable(x, cy, d.w, d.h, `door_${door}`, img, () => this.onEvent({ t: 'tapDoor', door }));
+      const iy = cy - V.look.doorIconDy;
+      const badge = this.add(this.scene.add.circle(x, iy, d.badge, COLORS.paper).setStrokeStyle(V.look.lineBold, COLORS.ink).setDepth(11));
+      const mark = door === 'safe' ? this.add(fitImage(this.scene.add.image(x, iy, 'v2_chest'), d.icon).setDepth(11)) : this.text(x, iy, '?', d.badge * V.look.badgeFont, CSS.ink);
+      const parts = [badge, mark];
+      const all = [img, ...parts];
+      const z = this.tappable(x, cy, d.w, d.h, `door_${door}`, all, () => {
+        this.chosen = { img, parts };
+        this.onEvent({ t: 'tapDoor', door });
+      });
       z.input!.enabled = false; // the `doors` effect turns them on
       this.doors.push(z);
+      this.doorItems.push({ objs: all, x, top: d.y - d.h });
     };
     make(d.safeX, 'safe');
     make(d.mysteryX, 'mystery');
@@ -239,13 +348,18 @@ export class RoomView {
   private chest(big: boolean): void {
     const c = V.chest;
     const px = big ? c.bigPx : c.px;
+    // One picture cut in two along the lid's edge: that is how the chest opens without new art.
     const img = this.add(fitImage(this.scene.add.image(c.x, c.y, 'v2_chest').setOrigin(0.5, 1), px).setDepth(10));
-    this.tappable(c.x, c.y - img.displayHeight / 2, img.displayWidth, img.displayHeight, 'chest', img, () => this.onEvent({ t: 'tapChest' }));
+    const mouthY = c.y - img.displayHeight * (1 - c.lidCut);
+    const lid = this.add(fitImage(this.scene.add.image(c.x, mouthY, 'v2_chest').setOrigin(0.5, c.lidCut), px).setDepth(11));
+    lid.setCrop(0, 0, lid.width, lid.height * c.lidCut);
+    img.setCrop(0, img.height * c.lidCut, img.width, img.height * (1 - c.lidCut));
+    this.lid = { lid, img, mouthY };
+    this.tappable(c.x, c.y - img.displayHeight / 2, img.displayWidth, img.displayHeight, 'chest', [img, lid], () => this.onEvent({ t: 'tapChest' }));
   }
 
   private cashierRoom(): void {
-    const c = V.cashier;
-    this.cashier = this.add(fitImage(this.scene.add.image(c.x, c.y, 'v2_cashier').setOrigin(0.5, 1), c.px).setDepth(10));
+    this.stand('v2_cashier', V.cashier);
   }
 
   /** Three stalls, hidden Yes and No at the bottom. The book arrives with the `book` effect. */
@@ -254,10 +368,12 @@ export class RoomView {
     t.stalls.forEach((f, i) => {
       const x = k.xs[i]!;
       const iy = k.y - k.h / 2 - k.itemPx / 2;
+      const pic = fitImage(this.scene.add.image(0, iy, `v2_item_${f}`), k.itemPx);
+      this.pics.set(`stall_${f}`, pic);
       const box = this.add(
         this.scene.add.container(x, 0, [
           this.scene.add.rectangle(0, k.y, k.w, k.h, COLORS.paper).setStrokeStyle(V.look.lineBold, COLORS.ink),
-          fitImage(this.scene.add.image(0, iy, `v2_item_${f}`), k.itemPx),
+          pic,
         ]).setDepth(10),
       );
       // The tap area covers the counter and the fruit; its centre is where the e2e hook clicks.
@@ -272,7 +388,7 @@ export class RoomView {
     const a = k.ask;
     const mk = (x: number, kind: 'tick' | 'cross', name: string, ev: TripEvent): void => {
       const b = this.add(makeClayButton(this.scene, x, a.y, { w: a.w, h: a.h, variant: 'plain', ariaName: name, onTap: () => this.onEvent(ev) }).setDepth(20));
-      glyph(b, kind, a.glyph, -a.h * V.look.glyphDy);
+      (b.list[1] as Box).add(drawGlyph(this.scene, kind, a.glyph, -a.h * V.look.glyphDy));
       this.spots.set(name.toLowerCase(), { x, y: a.y });
       this.asks.push(b);
     };
@@ -299,22 +415,31 @@ export class RoomView {
   private again(word: WordId): void {
     const g = V.gate.again;
     const b = this.add(makeClayButton(this.scene, g.x, g.y, { w: g.size, h: g.size, variant: 'plain', ariaName: 'Listen again', onTap: () => this.onAgain(word) }).setDepth(20));
-    glyph(b, 'ear', g.glyph, -g.size * V.look.glyphDy);
+    (b.list[1] as Box).add(drawGlyph(this.scene, 'ear', g.glyph, -g.size * V.look.glyphDy));
     this.spots.set('again', { x: g.x, y: g.y });
+    this.extras.push(b);
   }
 
-  /** Robot: a speech bubble with the item's picture (a swatch for a colour). */
-  private robotBubble(word: WordId): void {
+  /** Robot: drops in to block the way, sways, and wants the item in its bubble (a swatch for a colour). */
+  private robotRoom(word: WordId): void {
     const r = V.robot.bubble;
     const s = this.scene;
+    const n = this.npc!;
+    if (!reducedMotion()) {
+      n.y = this.npcY - V.robot.dropPx;
+      s.tweens.add({ targets: n, y: this.npcY, duration: V.robot.dropMs, ease: 'Bounce.easeOut' });
+      s.tweens.add({ targets: n, angle: { from: -V.robot.swayDeg, to: V.robot.swayDeg }, duration: V.robot.swayMs, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    }
     const g = s.add.graphics().fillStyle(COLORS.paper, 1).lineStyle(V.look.lineBold, COLORS.indigo, 1);
     g.fillEllipse(0, 0, r.w, r.h).strokeEllipse(0, 0, r.w, r.h);
-    g.fillTriangle(-r.w * 0.4, r.h * 0.1, -r.w * 0.62, r.h * 0.32, -r.w * 0.28, r.h * 0.3);
+    const [ax, ay, bx, by, cx, cy] = r.tail;
+    g.fillTriangle(r.w * ax, r.h * ay, r.w * bx, r.h * by, r.w * cx, r.h * cy);
     const pic =
       wordDef(word).kind === 'color'
         ? s.add.rectangle(0, 0, r.pic, r.pic, SWATCH[word as 'red' | 'yellow' | 'green']).setStrokeStyle(V.look.lineBold, COLORS.indigo)
         : fitImage(s.add.image(0, 0, `v2_item_${word}`), r.pic);
     const root = this.add(s.add.container(r.x, r.y, [g, pic]).setDepth(12));
+    this.extras.push(root);
     if (reducedMotion()) return;
     root.setScale(V.look.popFrom);
     s.tweens.add({ targets: root, scale: 1, duration: r.popMs, ease: 'Back.easeOut' });

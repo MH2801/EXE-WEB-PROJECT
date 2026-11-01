@@ -75,6 +75,7 @@ export const TUNING = {
     noteMs: { pop: 45, sparkle: 70, boing: 60 }, // B, length of each note
     wave: { pop: 'triangle', sparkle: 'sine', boing: 'square' }, // B
     notes: { pop: [660, 990], sparkle: [1047, 1319, 1568, 2093], boing: [196, 262, 392, 523] }, // B, Hz, never falling
+    rise: [1, 1.122, 1.26, 1.335, 1.498, 1.682, 1.888, 2], // B, pitch multiplier per item in a row: a rising scale, it rests on the last step
   },
   // Wrong-fruit jokes (spec 9). All B, tune by eye with the founder.
   jokes: {
@@ -84,6 +85,8 @@ export const TUNING = {
     banana: { slipDeg: -25, slipMs: 180, hopPx: 70, spinMs: 650, sitSquash: 0.85, sitMs: 250, holdMs: 350 },
     grape: { count: 7, scale: 0.45, spreadX: 520, floorDy: 20, fallMs: 700, staggerMs: 70, hopPx: 40, hopMs: 160, hops: 3, restMs: 150, fadeMs: 250 },
     orange: { scale: 0.8, dropMs: 300, rollPx: 380, rollMs: 600, turns: 2, chase: 0.6, chaseSpeed: 1.5, holdMs: 250 },
+    apple: { scale: 0.9, dropPx: 280, dropMs: 300, squash: 0.8, wide: 1.12, squashMs: 110, flyPx: 300, flyUp: 150, flyMs: 520, stars: 6, starColor: 0xfff176, starInner: 6, starOuter: 15, starRx: 170, starRy: 130, starMs: 600, holdMs: 350 },
+    card: { squash: 0.72, wide: 1.16, squashMs: 140, springMs: 340, hopPx: 70, wobbleDeg: 7, wobbleMs: 80, wobbles: 2, holdMs: 200 }, // the robot's wrong card: smaller than a right card
   },
   // Memory and Parent view (Task 9). All B, tune by eye; positions are in the 1672x941 logic frame.
   memory: {
@@ -117,11 +120,12 @@ export const TUNING = {
     mimi: { x: 250, y: 850, scale: 0.7, wakeMs: 900 }, // wakeMs: asleep -> awake after a long trip
     // Opaque panels over home.svg's painted window patterns, so every window is drawn from the save.
     panels: [
-      { x: 647, y: 503, w: 123, h: 353, fill: 0xeaf7ff },
-      { x: 856, y: 457, w: 149, h: 470, fill: 0xf4fbff },
-      { x: 1058, y: 523, w: 110, h: 314, fill: 0xeaf7ff },
-      { x: 1260, y: 483, w: 149, h: 392, fill: 0xf4fbff },
-      { x: 1476, y: 542, w: 136, h: 274, fill: 0xeaf7ff },
+      // 8 px wider and taller than the painted patterns: windows cut at a pattern's edge left a faint dashed line. Still inside each building.
+      { x: 647, y: 503, w: 131, h: 361, fill: 0xeaf7ff },
+      { x: 856, y: 457, w: 157, h: 478, fill: 0xf4fbff },
+      { x: 1058, y: 523, w: 118, h: 322, fill: 0xeaf7ff },
+      { x: 1260, y: 483, w: 157, h: 400, fill: 0xf4fbff },
+      { x: 1476, y: 542, w: 144, h: 282, fill: 0xeaf7ff },
     ],
     // One window per word, in WORDS order (apple first).
     windows: [
@@ -150,7 +154,7 @@ export const TUNING = {
   // Trip numbers (spec 14).
   trip: {
     batteryMax: 3, // B
-    stallAutoMs: 1800, // B
+    stallAutoMs: 900, // B, spec 14: halved in Task 11, the show-off stays quick (GDD 6)
     handSize: 3, // B
     gearsPerItem: 1, // B
     gearsNewWord: 3, // B
@@ -160,11 +164,11 @@ export const TUNING = {
     patternC: 5, // B
     // Layout and feel of the trip HUD, bubble and cards (Task 7). All B, tune by eye; 1672x941 frame.
     layout: {
-      order: { x: 40, y: 36, slot: 104, gap: 14, font: 22, mark: 30 }, // top left, slots run rightwards
-      battery: { right: 1632, y: 36, barW: 40, barH: 70, gap: 12, fallPx: 160, fallMs: 500 }, // top right
-      gears: { right: 1632, y: 150, font: 48, icon: 22, bounce: 1.25, bounceMs: 140 }, // under the battery
-      cards: { y: 810, w: 220, h: 250, gap: 40, thick: 12, pic: 110, swatch: 120, font: 40, enterDy: 300, enterMs: 320, staggerMs: 80, upPx: 70, upMs: 140, fadeMs: 200 }, // bottom row
-      bubble: { dx: 190, dy: -440, w: 200, h: 170, pic: 100, font: 90, popMs: 160 }, // from Mimi's feet
+      order: { x: 40, y: 36, slot: 104, gap: 14, font: 22, mark: 30, r: 22, line: 6, qFont: 0.6, pic: 0.7, ear: 0.6, swW: 0.6, swTop: 0.38, swH: 0.46, swR: 12, swLine: 4, wordY: 0.3, markInset: 6, markLine: 5, tick: [[-8, 0], [-2, 7], [9, -7]], skipAlpha: 0.35, popMs: 200, staggerMs: 90, bump: 1.2, bumpMs: 130 }, // top left, slots run rightwards
+      battery: { right: 1632, y: 36, barW: 40, barH: 70, gap: 12, fallPx: 160, fallMs: 500, line: 5, r: 8 }, // top right
+      gears: { right: 1632, y: 150, font: 48, icon: 22, bounce: 1.25, bounceMs: 140, teeth: 16, inner: 0.8, hole: 0.35, line: 5, textGap: 10 }, // under the battery
+      cards: { y: 810, w: 220, h: 250, gap: 40, thick: 12, pic: 110, swatch: 120, font: 40, enterDy: 300, enterMs: 320, staggerMs: 80, upPx: 70, upMs: 140, fadeMs: 200, r: 30, line: 6, picY: 0.4, wordY: 0.82, swatchR: 24, upScale: 1.1, fadeScale: 0.6, flyMs: 300, flyEnd: 0.35 }, // bottom row
+      bubble: { dx: 190, dy: -440, w: 200, h: 170, pic: 100, font: 90, popMs: 160, edge: 8, line: 6, popFrom: 0.8, tail: [[-0.38, 0.55, 16], [-0.5, 0.8, 9]], wobbleDeg: 5, wobbleMs: 700 }, // from Mimi's feet; tail = dots as [x ratio, y ratio, radius]
       swatch: { red: 0xe5484d, yellow: 0xffc83d, green: 0x3fae4a, orange: 0xff8a2b }, // colour cards and order slots; orange is only the book clue
       depth: 40, // HUD and cards draw above the room
     },
@@ -178,8 +182,8 @@ export const TUNING = {
       dialogue: { x: 1050, y: 228, w: 860 }, // B, box centre and width (x 620-1480, y 143-313): clear of her bubble, the gears and the order row
       map: { y: 700, x0: 260, x1: 1400, line: 10, node: 22 }, // B, path and its stops
       floor: { y: 740, h: 201 }, // B, lighter strip under every room
-      door: { w: 300, h: 420, y: 740, safeX: 900, mysteryX: 1300, glowW: 440, glowH: 560, glowAlpha: 0.35, badge: 56, icon: 110 }, // B, both doors the same size (GDD 6); the "?" glow is Sun
-      chest: { x: 1100, y: 740, px: 360, bigPx: 520 }, // B
+      door: { w: 300, h: 420, y: 740, safeX: 900, mysteryX: 1300, glowW: 420, glowH: 440, glowDy: 25, glowAlpha: 0.35, badge: 84, icon: 130, shakeDeg: 2.5, shakeMs: 60, shakes: 1, openMs: 260, openX: 0.12, lightW: 0.8, lightH: 0.9, lightScale: 1.35, lightAlpha: 0.5 }, // B, both doors the same size and badge (GDD 6); the "?" glow is Sun and stops below the dialogue box (y 313)
+      chest: { x: 1100, y: 740, px: 360, bigPx: 520, lidCut: 0.46, lidRise: 80, lidDeg: -16, shakePx: 7, shakeMs: 70, shakes: 2, openMs: 240, glowW: 0.74, glowH: 0.14 }, // B, lidCut = lid's edge in chest.svg (124 of 270)
       counter: { x: 1000, y: 700, w: 640, h: 80, itemPx: 220, label: 48 }, // B, the stall where Mimi shows what she knows
       teach: {
         xs: [560, 820, 1080], y: 700, w: 230, h: 80, itemPx: 170, // B, three stalls of the "?" room
@@ -187,21 +191,37 @@ export const TUNING = {
         // The book opens on the right: the word on top, its clues below. Tap any part to hear it.
         book: { x: 1440, y: 550, w: 400, h: 440, fill: 0xf4fbff, wordY: -150, wordW: 340, wordH: 120, wordPx: 64, clueY: 50, clueDx: 95, tile: 170, clue: 100, openDx: 420, openMs: 320, pulse: 1.06, pulseMs: 140 }, // B
       },
-      cashier: { x: 1100, y: 740, px: 430, leanDeg: 6, leanPx: 14, leanMs: 160 }, // B, the robot leans toward Mimi and holds for suspenseMs
+      cashier: { x: 1100, y: 740, px: 430, leanDeg: -9, leanPx: 14, leanMs: 160, settleMs: 60, breathX: 1.05, breathY: 0.96 }, // B, the robot leans toward Mimi (she is to its left, so the angle is negative) and is upright settleMs before the verdict; breath = Mimi's held breath
       npc: { x: 1100, y: 740, px: 420 }, // B, gate and robot
-      gate: { again: { x: 1450, y: 600, size: 150, glyph: 80 } }, // B, the listen-again button
-      robot: { bubble: { x: 1450, y: 470, w: 260, h: 200, pic: 130, popMs: 160 } }, // B, what the robot wants
+      mom: { x: 1100, y: 740, px: 470 }, // B, the opening: Mom holds the list
+      talk: { px: 8, ms: 150 }, // B, whoever stands in the room bobs while it speaks
+      gate: { again: { x: 1450, y: 600, size: 150, glyph: 80 }, liftTo: 0.06, liftMs: 420 }, // B, the listen-again button; the gate rolls up
+      robot: { bubble: { x: 1450, y: 470, w: 260, h: 200, pic: 130, popMs: 160, tail: [-0.4, 0.1, -0.62, 0.32, -0.28, 0.3] }, dropPx: 300, dropMs: 420, swayDeg: 3, swayMs: 650, aside: 700, asideMs: 420 }, // B, what the robot wants; it drops in, sways, and hops off when fed
+      invite: { hopPx: 14, ms: 420, restMs: 900, staggerMs: 140, leanDeg: 6, starPx: 28, starDy: 34 }, // B, R24: slow hop on what can be tapped; Mimi leans the same way. Star = reduced motion
+      tail: { w: 64, len: 60, lean: 60, margin: 80, line: 8, fill: 0xe8f6ff, edge: 0x3aa8ff, depth: 501 }, // B, dialogue tail toward the speaker; colours match the box
       helper: { px: 300, y: 740, ms: 900, depth: 14 }, // B, the helper robot walks to the stall in this long, and back
       fx: {
-        collect: { px: 110, ms: 600, to: { x: 300, y: 88 } }, // B, the item flies toward the order row (same path for every item)
-        chest: { rise: 140, ms: 900, holdMs: 300, font: 110, stars: 6, inner: 6, outer: 14, rx: 150, ry: 110, starMs: 500 }, // B
+        collect: { px: 110, ms: 500, to: { x: 300, y: 88 } }, // B, the item is pulled to its order slot (same path and sound for every item); `to` if no slot is open
+        dash: { x: 590, speed: 4 }, // B, Mimi runs to the stall to take what she knows
+        chest: { x: 1480, y: 470, w: 240, h: 150, r: 30, rise: 40, ms: 260, holdMs: 500, font: 96, stars: 8, inner: 6, outer: 14, rx: 170, ry: 130, starMs: 500 }, // B, the amount sits on its own plate beside the chest, never on the art
+        gearFly: { px: 56, ms: 420, staggerMs: 90 }, // B, gears fly to the counter
         reveal: { x: 1470, y: 520, px: 280, popMs: 200 }, // B, the right item, big, beside the cashier
-        sleep: { cartPx: 380, y: 800, inMs: 700, outMs: 1300 }, // B, the cart carries Mimi off
-        hop: { px: 40, ms: 160, repeat: 2 }, // B, the basic joke when no fruit joke applies
-        small: { stars: 6, inner: 5, outer: 12, rx: 150, ry: 110, ms: 500, hopPx: 20, hopMs: 140 }, // B, a right item: smaller than the big peak (GDD 2)
+        sleep: { cartPx: 380, y: 800, inMs: 700, outMs: 1300, seatY: 700, hopMs: 280, napMs: 500, z: { n: 3, font: 64, x: 150, y: -480, stepY: -60, rise: 130, ms: 1000, staggerMs: 330 } }, // B, she dozes, the cart rolls in, she sits in it and is carried off
+        yawn: { sx: 0.95, sy: 1.08, deg: -5, ms: 420, holdMs: 300 }, // B, the stretch while she says "So sleepy"
+        small: { stars: 9, inner: 5, outer: 13, rx: 170, ry: 130, ms: 500, hopPx: 30, hopMs: 150 }, // B, a right item: bigger than a wrong card, smaller than the big peak (GDD 2)
+        // The biggest peak of the trip (GDD 9). Fireworks stay 340 ms apart: under 3 per second (GDD 9).
+        peak: {
+          stars: 20, inner: 8, outer: 22, rx: 380, ry: 300, ms: 1000, hopPx: 90, hopMs: 200, hopRepeat: 2,
+          shots: [[-330, -120, 0xff7aa8, 200], [330, -160, 0x7ad8ff, 540], [0, -260, 0xb6f07a, 880], [-220, -240, 0xffd23f, 1220], [260, -60, 0xff7aa8, 1560]],
+          leaf: { x: 730, y: 370, from: 0.3, riseMs: 500, holdMs: 1400, rays: 12, rayInner: 190, rayOuter: 250, rayLine: 12, spin: 40 },
+        },
       },
       // Drawing constants that were literals in the room, Mimi and fx code. B, look only.
-      look: { floorAlpha: 0.14, line: 5, lineBold: 6, lineBook: 8, doorIconDy: 40, stallSwatch: 0.8, clueLongW: 0.95, clueLongH: 0.36, clueRound: 0.45, popFrom: 0.8, bookHitDy: 24, glyphDy: 0.05, textStroke: 10, collectEnd: 0.5, mimiDepth: 30, cartDepth: 25, fxDepth: 5 },
+      look: {
+        floorAlpha: 0.14, line: 5, lineBold: 6, lineBook: 8, doorIconDy: 40, badgeFont: 1.3, stallSwatch: 0.8, clueLongW: 0.95, clueLongH: 0.36, clueRound: 0.45, popFrom: 0.8, bookHitDy: 24, glyphDy: 0.05, textStroke: 10, collectEnd: 0.5, mimiDepth: 30, cartDepth: 35, fxDepth: 5,
+        // Icon shapes as ratios of the icon size.
+        glyph: { line: 0.14, tick: [[-0.34, 0], [-0.1, 0.24], [0.36, -0.26]], cross: 0.28, ear: [[-0.38, -0.14], [-0.18, -0.14], [0.06, -0.34], [0.06, 0.34], [-0.18, 0.14], [-0.38, 0.14]], earX: 0.06, earArcs: [0.26, 0.46], earAngle: 0.9 },
+      },
       bounce: { px: 24, ms: 120 }, // B, optional tap fun
     },
   },

@@ -576,3 +576,24 @@ describe('word choice over several trips', () => {
     }
   });
 });
+
+describe('the bubble changes at once (GDD 6, R25)', () => {
+  it('on Yes the item is in the bubble before any spoken line', () => {
+    const t = teachAt();
+    const fx = kinds(playTrip(A, SEED, [MYSTERY, stallTap(wrongOf(t)[0]!), YES]).per[3]!);
+    expect(fx.indexOf('bubble')).toBeGreaterThanOrEqual(0);
+    expect(fx.indexOf('bubble')).toBeLessThan(fx.indexOf('say'));
+  });
+
+  it('with the helper the bubble changes once it has bought, before Mimi speaks', () => {
+    const t = teachAt();
+    const refuse = t.teach!.stalls.flatMap((f) => [stallTap(f), NO]);
+    const fx = playTrip(A, SEED, [MYSTERY, ...refuse]).per.at(-1)!;
+    const helper = fx.findIndex((e) => e.t === 'helper');
+    const bub = fx.findIndex((e) => e.t === 'bubble');
+    const mem = fx.findIndex((e) => e.t === 'say' && e.line === wordLine('mem', t.teach!.word));
+    expect(helper).toBeGreaterThanOrEqual(0);
+    expect(bub).toBeGreaterThan(helper);
+    expect(mem).toBeGreaterThan(bub);
+  });
+});

@@ -273,7 +273,7 @@ function believeItem(s: TripState, item: FruitId, from: 'child' | 'helper', lead
       basket: [...s.basket, { word, item, fresh: true }], helped: s.helped + (from === 'helper' ? 1 : 0),
     },
     effects: [
-      ...lead, { t: 'book', word: null }, bubble(item), { t: 'collect', item }, say(wordLine('mem', word)),
+      ...lead, { t: 'book', word: null }, { t: 'collect', item }, say(wordLine('mem', word)),
       orderFx(order), pose('happy'),
     ],
   };
@@ -282,14 +282,15 @@ function believeItem(s: TripState, item: FruitId, from: 'child' | 'helper', lead
 function onYes(s: TripState): Result {
   const t = s.teach;
   if (!t?.pick) return noop(s);
-  return believeItem(s, t.pick, 'child', [{ t: 'ask', show: false }, say(wordLine('yes', t.word)), pose('happy')]);
+  // The bubble changes first: the belief is there the moment of Yes, before any line (GDD 6, R25).
+  return believeItem(s, t.pick, 'child', [{ t: 'ask', show: false }, bubble(t.pick), say(wordLine('yes', t.word)), pose('happy')]);
 }
 
 /** The helper robot walks in and buys the right item. Only after three refused stalls or the last rung of the ladder. */
 function helperBuys(s: TripState, lead: TripEffect[]): Result {
   const word = s.teach!.word;
   const item = wordDef(word).answer;
-  return believeItem(s, item, 'helper', [...lead, { t: 'stalls', enabled: false }, { t: 'helper', item, line: wordLine('npc', word) }]);
+  return believeItem(s, item, 'helper', [...lead, { t: 'stalls', enabled: false }, { t: 'helper', item, line: wordLine('npc', word) }, bubble(item)]);
 }
 
 function onNo(s: TripState): Result {

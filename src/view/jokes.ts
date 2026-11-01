@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import type { WrongFruit } from '../core/types';
+import type { FruitId } from '../core/types';
 import { TUNING } from '../content/tuning';
 import type { Mimi } from './actors';
 import { playSfx } from './sfx';
@@ -33,7 +33,7 @@ const heldPos = (m: Mimi) => ({
 });
 
 // Spec 9: surprised, then laughing. Each scene ends on the happy pose; the core then says mimi.oops.
-const SCENES: Record<WrongFruit, (c: Ctx) => Promise<void>> = {
+const SCENES: Record<FruitId | 'card', (c: Ctx) => Promise<void>> = {
   lemon: async ({ scene, mimi, home, tw, wait }) => {
     const l = TUNING.jokes.lemon;
     playSfx('pop'); // the bite
@@ -101,10 +101,42 @@ const SCENES: Record<WrongFruit, (c: Ctx) => Promise<void>> = {
     mimi.pose('happy');
     await wait(o.holdMs);
   },
+  // The apple drops on her head, bonks, and rolls away: she is the one surprised (a wrong pick in the "?" room can be the apple).
+  apple: async ({ scene, mimi, home, tw, wait, add }) => {
+    const a = TUNING.jokes.apple;
+    const top = home.y - mimi.body.height * mimi.go.scaleY;
+    const ball = add(scene.add.image(home.x, top - a.dropPx, 'fruit_apple').setScale(a.scale).setDepth(TUNING.burst.itemDepth));
+    await tw({ targets: ball, y: top, duration: a.dropMs, ease: 'Quad.In' });
+    playSfx('boing');
+    burst(scene, home.x, top, a.stars, a.starColor, a.starInner, a.starOuter, a.starRx, a.starRy, a.starMs);
+    await Promise.all([
+      tw({ targets: mimi.body, scaleY: a.squash, scaleX: a.wide, duration: a.squashMs, yoyo: true }),
+      tw({ targets: ball, x: home.x + a.flyPx, angle: 360, duration: a.flyMs }),
+      tw({ targets: ball, y: top - a.flyUp, duration: a.flyMs / 3, ease: 'Quad.Out' }).then(() =>
+        tw({ targets: ball, y: home.y - ball.displayHeight / 2, duration: (a.flyMs * 2) / 3, ease: 'Bounce.Out' })),
+    ]);
+    playSfx('pop');
+    mimi.pose('happy');
+    await wait(a.holdMs);
+  },
+  // The robot's wrong card: Mimi is squashed flat by a boing and springs back wobbling. Small on purpose: the right card must beat it (GDD 2).
+  card: async ({ mimi, home, tw, wait }) => {
+    const c = TUNING.jokes.card;
+    await tw({ targets: mimi.body, scaleY: c.squash, scaleX: c.wide, duration: c.squashMs, ease: 'Quad.Out' });
+    playSfx('boing');
+    await Promise.all([
+      tw({ targets: mimi.body, scaleY: 1, scaleX: 1, duration: c.springMs, ease: 'Back.Out' }),
+      tw({ targets: mimi.go, y: home.y - c.hopPx, duration: c.springMs / 2, yoyo: true, ease: 'Quad.Out' }),
+    ]);
+    await tw({ targets: mimi.body, angle: { from: -c.wobbleDeg, to: c.wobbleDeg }, duration: c.wobbleMs, yoyo: true, repeat: c.wobbles });
+    mimi.body.setAngle(0);
+    mimi.pose('happy');
+    await wait(c.holdMs);
+  },
 };
 
-/** One wrong-fruit joke, never longer than TUNING.jokes.maxMs. Always leaves Mimi in place, upright and happy. */
-export function playJoke(scene: Phaser.Scene, mimi: Mimi, fruit: WrongFruit): Promise<void> {
+/** One wrong-item joke (`null` = the robot's wrong card), never longer than TUNING.jokes.maxMs. Always leaves Mimi in place, upright and happy. */
+export function playJoke(scene: Phaser.Scene, mimi: Mimi, fruit: FruitId | null): Promise<void> {
   const j = TUNING.jokes;
   const home = { x: mimi.go.x, y: mimi.go.y };
   const made: Phaser.GameObjects.Image[] = [];
@@ -121,7 +153,7 @@ export function playJoke(scene: Phaser.Scene, mimi: Mimi, fruit: WrongFruit): Pr
   };
   mimi.pose('surprised');
   const still = reducedMotion(); // reduced motion: still poses and the sound only
-  const scenePlay = still ? ctx.wait(j.stillMs) : SCENES[fruit](ctx);
+  const scenePlay = still ? ctx.wait(j.stillMs) : SCENES[fruit ?? 'card'](ctx);
   return new Promise<void>((resolve) => {
     const ev = scene.time.delayedCall(j.maxMs, () => end());
     function end(): void {

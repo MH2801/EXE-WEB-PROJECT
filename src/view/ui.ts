@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 import { createSpeaker } from './speech';
 import { RECORDED } from '../content/audio-manifest';
 import { TUNING } from '../content/tuning';
+import { WORDS } from '../content/words';
+import type { WordId } from '../core/types';
 import { playSfx } from './sfx';
 import { COLORS, CSS, FONT_DISPLAY } from './theme';
 
@@ -87,8 +89,8 @@ export function makeClayButton(
     scene.add.graphics().fillStyle(opts.variant === 'primary' ? COLORS.sun : COLORS.paper, 1).fillRoundedRect(-w / 2, -h / 2, w, fh, 32).lineStyle(6, COLORS.indigo, 1).strokeRoundedRect(-w / 2, -h / 2, w, fh, 32),
   ]);
   const midY = -lip / 2;
-  if (opts.icon) face.add(fitImage(scene.add.image(opts.label ? -w * 0.22 : 0, midY, opts.icon), fh * 0.6));
-  if (opts.label) face.add(scene.add.text(opts.icon ? w * 0.08 : 0, midY, opts.label, { fontFamily: FONT_DISPLAY, fontStyle: '800', fontSize: `${Math.round(h * 0.4)}px`, color: CSS.ink }).setOrigin(0.5));
+  if (opts.icon) face.add(fitImage(scene.add.image(opts.label ? -w * 0.28 : 0, midY, opts.icon), fh * 0.6));
+  if (opts.label) face.add(scene.add.text(opts.icon ? w * 0.12 : 0, midY, opts.label, { fontFamily: FONT_DISPLAY, fontStyle: '800', fontSize: `${Math.round(h * 0.4)}px`, color: CSS.ink }).setOrigin(0.5));
   const c = scene.add.container(x, y, [base, face]).setSize(w, h).setInteractive({ useHandCursor: true }).setName(opts.ariaName);
   let last = -Infinity;
   const release = () => {
@@ -129,4 +131,109 @@ export function addRotateOverlay(scene: Phaser.Scene): void {
     scene.scale.off(Phaser.Scale.Events.RESIZE, sync);
   });
   sync();
+}
+
+/** Icons drawn once into textures (no art file exists for them). Safe to call again. */
+export function ensureIcons(scene: Phaser.Scene): void {
+  const s = TUNING.home.iconPx;
+  const c = s / 2;
+  const make = (key: string, draw: (g: Phaser.GameObjects.Graphics) => void) => {
+    if (scene.textures.exists(key)) return;
+    const g = scene.add.graphics().lineStyle(5, COLORS.indigo, 1);
+    draw(g);
+    g.generateTexture(key, s, s);
+    g.destroy();
+  };
+  make('home_gear', (g) => {
+    const pts = Array.from({ length: 16 }, (_, i) => {
+      const r = i % 2 ? c * 0.78 : c - 4;
+      return new Phaser.Math.Vector2(c + Math.cos((i * Math.PI) / 8) * r, c + Math.sin((i * Math.PI) / 8) * r);
+    });
+    g.fillStyle(COLORS.sun, 1).fillPoints(pts, true).strokePoints(pts, true).fillStyle(COLORS.paper, 1).fillCircle(c, c, c * 0.35);
+  });
+  make('home_book', (g) => {
+    g.fillStyle(COLORS.skyLight, 1).fillRoundedRect(c * 0.4, c * 0.2, c * 1.2, c * 1.6, 8).strokeRoundedRect(c * 0.4, c * 0.2, c * 1.2, c * 1.6, 8);
+    g.fillStyle(COLORS.indigo, 1).fillRect(c * 0.4, c * 0.2, c * 0.18, c * 1.6);
+    for (const dy of [0.6, 0.95, 1.3]) g.lineBetween(c * 0.8, c * dy, c * 1.4, c * dy);
+  });
+  make('home_play', (g) => g.fillStyle(COLORS.indigo, 1).fillTriangle(c * 0.5, c * 0.25, c * 0.5, c * 1.75, c * 1.65, c));
+  make('home_house', (g) => {
+    g.fillStyle(COLORS.indigo, 1).fillTriangle(c * 0.15, c * 0.95, c, c * 0.15, c * 1.85, c * 0.95);
+    g.fillStyle(COLORS.paper, 1).fillRect(c * 0.4, c * 0.95, c * 1.2, c * 0.85).strokeRect(c * 0.4, c * 0.95, c * 1.2, c * 0.85);
+    g.fillStyle(COLORS.sun, 1).fillRect(c * 0.85, c * 1.25, c * 0.3, c * 0.55);
+  });
+}
+
+export type LeafMode = 'known' | 'strong' | 'unknown';
+
+/** One Word Book leaf, centred on (x, y). Known: picture and word. Strong: gold rim and a star. Unknown: a question mark. */
+export function drawLeaf(scene: Phaser.Scene, word: WordId, x: number, y: number, mode: LeafMode): Phaser.GameObjects.Container {
+  const { w, h, pic, swatch, font, q, border, goldBorder, star } = TUNING.wordBook.leaf;
+  const strong = mode === 'strong';
+  const g = scene.add.graphics().fillStyle(mode === 'unknown' ? 0xe3f1fb : COLORS.paper, 1).fillRoundedRect(-w / 2, -h / 2, w, h, 30);
+  if (strong) g.lineStyle(goldBorder + 8, COLORS.indigo, 1).strokeRoundedRect(-w / 2, -h / 2, w, h, 30).lineStyle(goldBorder, COLORS.sun, 1).strokeRoundedRect(-w / 2, -h / 2, w, h, 30);
+  else g.lineStyle(border, COLORS.indigo, 1).strokeRoundedRect(-w / 2, -h / 2, w, h, 30);
+  const c = scene.add.container(x, y, [g]);
+  if (mode === 'unknown') return c.add(scene.add.text(0, 0, '?', { fontFamily: FONT_DISPLAY, fontStyle: '800', fontSize: `${q}px`, color: CSS.indigo }).setOrigin(0.5).setAlpha(0.55));
+  const picY = -h * 0.1;
+  if (WORDS.find((d) => d.id === word)?.kind === 'color') {
+    const rect = scene.add.graphics().fillStyle(TUNING.trip.layout.swatch[word as 'red' | 'yellow' | 'green'], 1);
+    c.add(rect.fillRoundedRect(-swatch / 2, picY - swatch / 2, swatch, swatch, 24).lineStyle(6, COLORS.indigo, 1).strokeRoundedRect(-swatch / 2, picY - swatch / 2, swatch, swatch, 24));
+  } else c.add(fitImage(scene.add.image(0, picY, `v2_item_${word}`), pic));
+  c.add(scene.add.text(0, h * 0.34, word, { fontFamily: FONT_DISPLAY, fontStyle: '800', fontSize: `${font}px`, color: CSS.indigo }).setOrigin(0.5));
+  if (strong) {
+    const pts = Array.from({ length: 10 }, (_, i) => {
+      const r = i % 2 ? star * 0.45 : star;
+      return new Phaser.Math.Vector2(w / 2 - star - 10 + Math.sin((i * Math.PI) / 5) * r, -h / 2 + star + 10 - Math.cos((i * Math.PI) / 5) * r);
+    });
+    c.add(scene.add.graphics().fillStyle(COLORS.sun, 1).lineStyle(4, COLORS.indigo, 1).fillPoints(pts, true).strokePoints(pts, true));
+  }
+  return c;
+}
+
+/** A plain drawn icon, ink only: no colour says yes or no. Centred on (0, dy). */
+export function drawGlyph(scene: Phaser.Scene, kind: 'tick' | 'cross' | 'ear', s: number, dy = 0): Phaser.GameObjects.Graphics {
+  const G = TUNING.trip.view.look.glyph;
+  const g = scene.add.graphics().lineStyle(s * G.line, COLORS.ink, 1).fillStyle(COLORS.ink, 1).setY(dy);
+  const path = (pts: readonly (readonly [number, number])[]) => {
+    g.beginPath();
+    pts.forEach(([x, y], i) => (i ? g.lineTo(x * s, y * s) : g.moveTo(x * s, y * s)));
+  };
+  if (kind === 'tick') {
+    path(G.tick);
+    g.strokePath();
+  } else if (kind === 'cross') {
+    path([[-G.cross, -G.cross], [G.cross, G.cross]]);
+    g.strokePath();
+    path([[G.cross, -G.cross], [-G.cross, G.cross]]);
+    g.strokePath();
+  } else {
+    path(G.ear);
+    g.closePath().fillPath();
+    for (const r of G.earArcs) g.beginPath().arc(G.earX * s, 0, r * s, -G.earAngle, G.earAngle).strokePath();
+  }
+  return g;
+}
+
+export type InviteItem = { objs: { y: number }[]; x: number; top: number };
+
+/**
+ * R24: what can be tapped hops slowly, by motion alone. No sound and no clock: it only ever stops. Reduced motion: a still star above it.
+ * Returns the stop, which puts everything back where it stood.
+ */
+export function inviteLoop(scene: Phaser.Scene, items: InviteItem[]): () => void {
+  const I = TUNING.trip.view.invite;
+  if (reducedMotion()) {
+    const stars = items.map(({ x, top }) => scene.add.star(x, top - I.starDy, TUNING.burst.points, I.starPx / 2, I.starPx, COLORS.sun).setDepth(TUNING.trip.layout.depth));
+    return () => stars.forEach((s) => s.destroy());
+  }
+  const held = items.flatMap((it, i) =>
+    it.objs.map((o) => ({ o, y: o.y, tw: scene.tweens.add({ targets: o, y: o.y - I.hopPx, duration: I.ms, ease: 'Sine.InOut', yoyo: true, repeat: -1, repeatDelay: I.restMs, delay: i * I.staggerMs }) })),
+  );
+  return () => {
+    for (const { o, y, tw } of held) {
+      tw.remove();
+      o.y = y;
+    }
+  };
 }

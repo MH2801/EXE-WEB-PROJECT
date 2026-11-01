@@ -10,8 +10,7 @@ import type { WordId } from '../core/types';
 import { Mimi } from '../view/actors';
 import { playSfx } from '../view/sfx';
 import { COLORS, CSS, FONT_DISPLAY } from '../view/theme';
-import { addRotateOverlay, fitImage, makeClayButton, makeSpeaker, reducedMotion } from '../view/ui';
-import { drawLeaf, ensureIcons } from './WordBook';
+import { addRotateOverlay, drawLeaf, ensureIcons, fitImage, makeClayButton, makeSpeaker, reducedMotion } from '../view/ui';
 
 const H = TUNING.home;
 type Speaker = ReturnType<typeof makeSpeaker>;
@@ -82,8 +81,9 @@ export class Home extends Phaser.Scene {
     if (summary) {
       if (knownWords(save.brain).length < WORDS.length) this.ajarDoor();
       if (fresh) this.time.delayedCall(H.light.delayMs, () => this.firstLight(fresh, lit, shelf, mimi, speaker));
-      // Two equal buttons, Home and Go; nothing runs on by itself.
-      makeClayButton(this, second.x, second.y, { icon: 'home_house', w: second.w, h: second.h, variant: 'primary', ariaName: 'Home', onTap: () => this.leave(speaker, 'Home') });
+      // Two equal buttons, Home and Go; nothing runs on by itself. Deliberate exception to the one-Sun rule (ui-ux 2):
+      // stopping must be as bright as going on, so the game never leans on the child to continue.
+      makeClayButton(this, second.x, second.y, { label: LABELS.home, icon: 'home_house', w: second.w, h: second.h, variant: 'primary', ariaName: 'Home', onTap: () => this.leave(speaker, 'Home') });
     } else {
       const lock = makeClayButton(this, H.lock.x, H.lock.y, { label: '\u{1F512}', w: H.lock.w, h: H.lock.h, variant: 'plain', ariaName: 'Parents', onTap: () => this.leave(speaker, 'Parent', { from: 'Home' }) });
       lock.setAlpha(0.8);
