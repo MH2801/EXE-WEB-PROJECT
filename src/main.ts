@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { TUNING } from './content/tuning';
 import { Boot } from './scenes/Boot';
+import { Home } from './scenes/Home';
 import { Memory } from './scenes/Memory';
 import { Mission } from './scenes/Mission';
 import { Parent } from './scenes/Parent';
@@ -15,7 +16,7 @@ const game = new Phaser.Game({
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
-  scene: [Boot, Title, Mission, Memory, Parent],
+  scene: [Boot, Home, Title, Mission, Memory, Parent],
 });
 
 if (import.meta.env.DEV) (window as unknown as { __game: Phaser.Game }).__game = game;

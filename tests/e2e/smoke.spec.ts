@@ -24,7 +24,7 @@ async function open(page: Page) {
   const errors: string[] = [];
   page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
   page.on('pageerror', (e) => errors.push(String(e)));
-  await page.goto('/');
+  await page.goto('/?day1=1');
   await waitFor(async () => (await phase(page)) === 'Title');
   await page.waitForTimeout(500);
   return errors;

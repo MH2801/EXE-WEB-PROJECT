@@ -54,3 +54,20 @@ describe('runEffects', () => {
     await expect(runEffects([], handlers({}))).resolves.toBeUndefined();
   });
 });
+
+describe('runEffects generic', () => {
+  type Own = { t: 'a'; n: number } | { t: 'b' };
+  it('runs a custom effect union and survives a throw', async () => {
+    const err = vi.spyOn(console, 'error').mockImplementation(noop);
+    const log: number[] = [];
+    await runEffects<Own>([{ t: 'a', n: 1 }, { t: 'b' }, { t: 'a', n: 2 }], {
+      a: (e) => void log.push(e.n),
+      b: () => {
+        throw new Error('boom');
+      },
+    });
+    expect(log).toEqual([1, 2]);
+    expect(err).toHaveBeenCalledTimes(1);
+    err.mockRestore();
+  });
+});

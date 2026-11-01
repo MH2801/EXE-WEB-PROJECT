@@ -31,6 +31,6 @@ export class Boot extends Phaser.Scene {
   }
 
   create(): void {
-    this.scene.start('Title');
+    this.scene.start(new URLSearchParams(location.search).has('day1') ? 'Title' : 'Home');
   }
 }
