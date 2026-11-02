@@ -87,14 +87,14 @@ export class Hud {
   }
 
   /** Bars are counted: a full bar is solid, an empty one is an outline. */
-  setBattery(left: number): void {
+  setBattery(left: number, fallMs: number = L.battery.fallMs): void {
     const b = L.battery;
     const max = TUNING.trip.batteryMax;
     const x0 = b.right - max * b.barW - (max - 1) * b.gap;
     if (this.left > left && !reducedMotion()) {
       const lost = this.scene.add.rectangle(x0 + left * (b.barW + b.gap) + b.barW / 2, b.y + b.barH / 2, b.barW, b.barH, COLORS.sun).setStrokeStyle(b.line, COLORS.indigo).setDepth(L.depth);
-      this.scene.tweens.add({ targets: lost, y: lost.y + b.fallPx, alpha: 0, duration: b.fallMs, ease: 'Quad.easeIn', onComplete: () => lost.destroy() });
-      this.scene.time.delayedCall(b.fallMs + TUNING.fallbackPadMs, () => lost.destroy());
+      this.scene.tweens.add({ targets: lost, y: lost.y + b.fallPx, alpha: 0, duration: fallMs, ease: 'Quad.easeIn', onComplete: () => lost.destroy() });
+      this.scene.time.delayedCall(fallMs + TUNING.fallbackPadMs, () => lost.destroy());
     }
     this.left = left;
     this.battery.clear().lineStyle(b.line, COLORS.skyLight, 1); // on Indigo, so an empty bar still counts

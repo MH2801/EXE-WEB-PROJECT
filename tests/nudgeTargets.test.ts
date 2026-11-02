@@ -2,13 +2,16 @@ import { describe, expect, it } from 'vitest';
 import { WORDS, wordDef } from '../src/content/words';
 import { startTrip, step, type TripEvent, type TripState } from '../src/core/trip';
 import type { Room } from '../src/core/tripgen';
-import { nudgeTargets } from '../src/view/nudgeTargets';
+import { nudgeStep, nudgeTargets } from '../src/view/nudgeTargets';
 import { rng } from './helpers/play';
 import { legalEvents, mkSave, roomOf, settle } from './helpers/tripPlay';
 
 /** Addendum 5.2 rule 5 and 8 item 3: a nudge sweeps every option and never points at the single right answer. */
 function check(s: TripState): void {
   const got = nudgeTargets(s);
+  // Trip drops targets whose step is learned: every option of a choice shares one step, so it drops whole or not at all.
+  expect(got.every((n) => nudgeStep(s, n) !== null)).toBe(true);
+  expect(new Set(got.filter((n) => n !== 'book_word').map((n) => nudgeStep(s, n))).size).toBeLessThanOrEqual(1);
   switch (s.phase) {
     case 'fork': {
       const f = roomOf(s) as Extract<Room, { kind: 'fork' }>;

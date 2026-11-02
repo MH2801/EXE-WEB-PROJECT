@@ -1,4 +1,5 @@
 import type { TripState } from '../core/trip';
+import type { OnboardingStep } from '../core/tripSave';
 
 /**
  * What the nudge hand may point at now, as names the Trip scene already places: `rooms.center(name)`, or
@@ -21,4 +22,13 @@ export function nudgeTargets(s: TripState): string[] {
     default:
       return [];
   }
+}
+
+/** The first-time verb (addendum 6) a target, or a tap on it, practises. One step per group of options, so a learned step never splits a choice. */
+export function nudgeStep(s: TripState, name: string): OnboardingStep | null {
+  const r = s.trip.rooms[s.room];
+  if (name.startsWith('door_')) return r?.kind === 'fork' && r.safeOpen ? 'fork' : 'mysteryDoor';
+  if (name.startsWith('stall_')) return 'stall';
+  if (name.startsWith('card_')) return s.phase === 'gate' ? 'card' : 'robotCard';
+  return name === 'book_word' ? 'book' : name === 'yes' || name === 'no' ? 'yesNo' : null;
 }

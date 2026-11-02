@@ -3,13 +3,16 @@ import { LINES, wordLine, type Line } from '../content/lines';
 import { TUNING } from '../content/tuning';
 import { browserStore } from '../core/save';
 import { applyTrip, AUTO_PHASES, startTrip, step, type TripEffect, type TripEvent, type TripPhase, type TripState } from '../core/trip';
-import { loadTripSave, writeTripSave, type TripSave } from '../core/tripSave';
+import { knownWords } from '../core/knowledge';
+import { loadTripSave, markSeen, needsNudge, writeTripSave, type OnboardingStep, type TripSave } from '../core/tripSave';
 import type { WordId } from '../core/types';
 import { Mimi } from '../view/actors';
 import { Bubble } from '../view/bubble';
 import { Cards } from '../view/cards';
 import { Dialogue } from '../view/dialogue';
 import { Hud } from '../view/hud';
+import { Nudge } from '../view/nudge';
+import { nudgeStep, nudgeTargets } from '../view/nudgeTargets';
 import { burst, playJoke } from '../view/jokes';
 import { leanTiming, RoomView, type InviteKind, type Tw } from '../view/rooms';
 import { runEffects, type Handlers } from '../view/runner';
@@ -24,6 +27,9 @@ const ENTRY: ReadonlySet<string> = new Set(['gate', 'robot', 'chest']); // rooms
 const noop = (): void => undefined;
 // R24: what each waiting phase invites the child to tap. Once that kind of tap is done in this trip it never invites again.
 const INVITE: Partial<Record<TripPhase, InviteKind | 'card'>> = { fork: 'door', teach: 'stall', asking: 'ask', chest: 'chest', gate: 'card', robot: 'card' };
+// The target group a tap belongs to, named as nudgeTargets names it, so the tap marks the step its nudge teaches.
+const TAPPED: Partial<Record<TripEvent['t'], string>> = { tapDoor: 'door_', tapStall: 'stall_', tapCard: 'card_', tapYes: 'yes', tapNo: 'no', bookOpen: 'book_word', bookWord: 'book_word' };
+const HIGH_FIVE: TripEffect[] = [{ t: 'pose', pose: 'happy' }, { t: 'say', line: 'mimi.high_five' }]; // R13: smaller than any celebrate
 
 /** `?seed=` (an unsigned integer) makes a trip repeatable; otherwise the clock picks one. core/ never reads the clock. */
 function pickSeed(): number {
@@ -60,6 +66,9 @@ export class Trip extends Phaser.Scene {
   private lean: Phaser.Tweens.Tween | null = null;
   private tail!: Phaser.GameObjects.Graphics;
   private tween: Tw = (cfg) => this.tw(cfg);
+  private nudge!: Nudge;
+  private learning: OnboardingStep | null = null; // the first-time step the running batch's tap practised
+  private cheered = new Set<string>(); // high fives given in this trip (R13)
 
   constructor() {
     super('Trip');
@@ -77,6 +86,8 @@ export class Trip extends Phaser.Scene {
     this.did = new Set();
     this.collected = 0;
     this.lean = null;
+    this.learning = null;
+    this.cheered = new Set();
     ensureIcons(this);
 
     const { gameW, gameH } = TUNING;
@@ -94,6 +105,7 @@ export class Trip extends Phaser.Scene {
     this.cards = new Cards(this, (word) => this.dispatch({ t: 'tapCard', word }));
     this.dialogue = new Dialogue(this, V.dialogue);
     this.tail = this.add.graphics().setDepth(V.tail.depth);
+    this.nudge = new Nudge(this);
     addRotateOverlay(this);
 
     this.input.on('pointerdown', this.onPointer, this);
@@ -113,7 +125,8 @@ export class Trip extends Phaser.Scene {
 
     const r = startTrip(this.save, pickSeed());
     this.state = r.state;
-    void this.run(r.effects);
+    // R13: the first Go ever (Home has just marked it once) gets her high five as the trip opens.
+    void this.run(this.save.trips === 0 && this.save.seen.go === 1 ? [...HIGH_FIVE, ...r.effects] : r.effects);
   }
 
   // ------------------------------------------------------------ event loop
@@ -126,12 +139,16 @@ export class Trip extends Phaser.Scene {
       return;
     }
     const before = this.state.phase;
+    const tapped = TAPPED[e.t];
+    const practised = tapped ? nudgeStep(this.state, tapped) : null; // read in the room the tap was made in
     const r = step(this.state, e);
     this.state = r.state;
     // `effectsDone` that changes nothing would loop forever: stop there.
     if (r.effects.length === 0 && (e.t !== 'effectsDone' || r.state.phase === before)) return;
     if (e.t.startsWith('tap')) this.did.add(INVITE[before] ?? '');
-    void this.run(r.effects, r.state.phase !== before && ENTRY.has(r.state.phase));
+    this.learning = practised && needsNudge(this.save, practised) ? practised : null;
+    if (this.learning) this.save = markSeen(this.save, this.learning); // reaches the store through goHome's applyTrip
+    void this.run(this.onboard(r.effects), r.state.phase !== before && ENTRY.has(r.state.phase));
   }
 
   private async run(effects: TripEffect[], hold = false): Promise<void> {
@@ -164,6 +181,7 @@ export class Trip extends Phaser.Scene {
   // ------------------------------------------------------------ invitation (R24): motion only, no sound, no clock
 
   private invite(): void {
+    this.startNudge();
     const kind = INVITE[this.state!.phase];
     if (!kind || this.did.has(kind)) return;
     if (kind === 'card') this.cards.invite();
@@ -176,6 +194,7 @@ export class Trip extends Phaser.Scene {
   }
 
   private endInvite(): void {
+    this.nudge.stop();
     this.rooms.endInvite();
     this.cards.endInvite();
     this.bubble.wobble(false);
@@ -184,8 +203,43 @@ export class Trip extends Phaser.Scene {
     this.mimi.body.setAngle(0);
   }
 
+  /** Ladder steps 2 and 3 (addendum 5.3) for each first-time verb still being learned: every option of the choice, never one alone (rule 5). */
+  private startNudge(): void {
+    const s = this.state!;
+    const at = nudgeTargets(s)
+      .filter((n) => {
+        const st = nudgeStep(s, n);
+        return st !== null && needsNudge(this.save, st);
+      })
+      .map((n) => (n.startsWith('card_') ? this.cards.center(n.slice('card_'.length) as WordId) : this.rooms.center(n)))
+      .filter((p): p is { x: number; y: number } => p !== null);
+    this.nudge.start(at, s.phase === 'gate' ? 'mimi.listen' : 'mimi.tap_here', (id) => {
+      // No dialogue box: the next tap's line cuts this one, and a box closing late would hide that line.
+      if (!reducedMotion()) this.tweens.add({ targets: this.mimi.body, y: -TUNING.hopPx, duration: TUNING.hopMs, yoyo: true });
+      void this.speaker.say(id);
+    });
+  }
+
+  /** Addendum 5.4 lines and the R13 high five, slotted into a core batch. View only; never after a stall pick or Yes/No (hidden truth, GDD 9). */
+  private onboard(fx: TripEffect[]): TripEffect[] {
+    const out = [...fx];
+    const room = out.find((e) => e.t === 'room');
+    if (room?.t === 'room' && room.room.kind === 'fork' && !room.room.safeOpen && needsNudge(this.save, 'mysteryDoor')) out.push({ t: 'say', line: 'mimi.teach_me' });
+    if (room?.t === 'room' && room.room.kind === 'gate' && needsNudge(this.save, 'card')) out.splice(out.findIndex((e) => e.t === 'say'), 0, { t: 'say', line: 'mimi.listen' });
+    const l = this.learning;
+    const firstWord = knownWords(this.save.brain).length <= 1; // she knows only apple, so this verdict brings the first word the child taught
+    const at = out.findIndex((e) => (e.t === 'doors' && !e.on && (l === 'mysteryDoor' || l === 'fork')) || (e.t === 'celebrate' && (e.size === 'big' ? firstWord : l === 'card' || l === 'robotCard')));
+    const key = l ?? 'word';
+    if (at >= 0 && !this.cheered.has(key)) {
+      this.cheered.add(key);
+      out.splice(at + 1, 0, ...HIGH_FIVE);
+    }
+    return out;
+  }
+
   /** While busy a tap only skips: it speeds up the map walk or cuts a spoken line. `wait` is never skipped (GDD 6, cashier). */
   private onPointer(): void {
+    this.nudge.poke();
     if (!this.busy) return this.startIdle(); // any tap restarts the count
     if (this.fresh) return;
     if (!this.mapping) return this.speaker.skip();
@@ -326,6 +380,14 @@ export class Trip extends Phaser.Scene {
     await this.sayLine('mimi.sleepy');
   }
 
+  /** First gate (beat 10): she tilts toward the listen button, as if to hear better, while she says "Listen!". */
+  private async cupEar(): Promise<void> {
+    const o = TUNING.onboarding.ear;
+    const x = this.rooms.center('again')?.x ?? TUNING.gameW;
+    void this.tw({ targets: this.mimi.body, angle: Math.sign(x - this.mimi.go.x) * o.deg, duration: o.ms, yoyo: true, hold: o.holdMs });
+    await this.sayLine('mimi.listen');
+  }
+
   /** Mimi runs to the stall to take what she knows herself: this is her showing off (GDD 6). */
   private async dash(): Promise<void> {
     const d = V.fx.dash;
@@ -412,6 +474,7 @@ export class Trip extends Phaser.Scene {
   private handlers: Handlers<TripEffect> = this.guarded({
     say: (e) => {
       if (e.line === 'mimi.sleepy') return this.yawn();
+      if (e.line === 'mimi.listen') return this.cupEar();
       if (e.line === 'robot.yum') void this.cards.spend(this.rooms.center('source')); // the card goes in as the robot says it
       if (e.line.startsWith('ok.')) this.mimi.pose('happy'); // a verdict: she lets her breath go on "Yes!"
       return this.sayLine(e.line);
@@ -435,6 +498,7 @@ export class Trip extends Phaser.Scene {
       this.mapPath.setVisible(false);
       this.cards.clear();
       this.rooms.show(e.room);
+      if (e.room.kind === 'fork' && e.room.safeOpen && needsNudge(this.save, 'fork')) this.rooms.glowSafe(); // beat 9: both doors glow
       if (e.room.kind === 'cashier') this.collected = 0; // the items she brought climb again toward the new word
       this.mimi.body.setFlipX(false); // the challenge is to her right
       const m = V.mimi;
@@ -449,7 +513,13 @@ export class Trip extends Phaser.Scene {
     },
     // The gate's word keeps its picture off the list until the gate is passed, so the gate is won by ear (GDD 6).
     order: (e) => this.hud.setOrder(e.slots, new Set(this.state!.trip.rooms.flatMap((r) => (r.kind === 'gate' ? [r.word] : [])))),
-    battery: (e) => this.hud.setBattery(e.left),
+    battery: (e) => {
+      if (this.learning !== 'robotCard') return this.hud.setBattery(e.left);
+      // Beat 11, the first robot cards: the bar falls slowly and Mimi reaches toward the battery (top right), so the loss is seen.
+      const o = TUNING.onboarding;
+      this.hud.setBattery(e.left, o.batteryFallMs);
+      return this.tw({ targets: this.mimi.body, angle: o.reach.deg, duration: o.reach.ms, yoyo: true, hold: o.batteryFallMs });
+    },
     gears: async (e) => {
       const f = V.fx.gearFly;
       const g = L.gears;

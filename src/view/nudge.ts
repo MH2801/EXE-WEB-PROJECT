@@ -69,9 +69,11 @@ export class Nudge {
       return;
     }
     const base = H.px / this.scene.textures.get('v2_hand').getSourceImage().height;
-    const rest = (t: Pt): Pt => ({ x: t.x, y: t.y + H.pressPx });
+    // A target near the bottom edge (Yes/No, cards) would push the hand off screen: then it comes from above, pointing down.
+    const down = this.targets.some((t) => t.y + H.pressPx + H.px > TUNING.gameH);
+    const rest = (t: Pt): Pt => ({ x: t.x, y: t.y + (down ? -H.pressPx : H.pressPx) });
     const first = rest(this.targets[0]!);
-    const hand = this.scene.add.image(first.x, first.y, 'v2_hand').setOrigin(0.5, 0).setScale(base).setDepth(H.depth);
+    const hand = this.scene.add.image(first.x, first.y, 'v2_hand').setOrigin(0.5, down ? 1 : 0).setFlipY(down).setScale(base).setDepth(H.depth);
     this.shown = [hand];
     // Each target: glide under it, press onto it, lift. The chain loops forever, so the hand never settles on one target.
     const steps = this.targets.flatMap((t, i): Phaser.Types.Tweens.TweenBuilderConfig[] => {

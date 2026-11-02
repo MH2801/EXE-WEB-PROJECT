@@ -264,6 +264,12 @@ export class RoomView {
     await tw({ targets: lid, y: lid.y - c.lidRise, angle: c.lidDeg, duration: c.openMs, ease: 'Back.easeOut' });
   }
 
+  /** Onboarding beat 9, the first real choice: the safe door glows like the "?" door, so both read as open. */
+  glowSafe(): void {
+    const d = V.door;
+    this.add(this.scene.add.ellipse(d.safeX, d.y - d.h / 2 + d.glowDy, d.glowW, d.glowH, COLORS.sun, d.glowAlpha).setDepth(9));
+  }
+
   invite(kind: InviteKind): void {
     this.endInvite();
     const k = V.teach;

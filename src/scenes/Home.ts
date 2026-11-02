@@ -5,12 +5,13 @@ import { WORDS } from '../content/words';
 import { knownWords } from '../core/knowledge';
 import { browserStore } from '../core/save';
 import type { TripSummary } from '../core/trip';
-import { loadTripSave } from '../core/tripSave';
+import { loadTripSave, markSeen, needsNudge, writeTripSave, type OnboardingStep } from '../core/tripSave';
 import type { WordId } from '../core/types';
 import { Mimi } from '../view/actors';
+import { Nudge } from '../view/nudge';
 import { playSfx } from '../view/sfx';
 import { COLORS, CSS, FONT_DISPLAY } from '../view/theme';
-import { addRotateOverlay, drawLeaf, ensureIcons, fitImage, makeClayButton, makeSpeaker, reducedMotion } from '../view/ui';
+import { addRotateOverlay, drawLeaf, ensureIcons, fitImage, inviteLoop, makeClayButton, makeSpeaker, reducedMotion } from '../view/ui';
 
 const H = TUNING.home;
 type Speaker = ReturnType<typeof makeSpeaker>;
@@ -78,6 +79,10 @@ export class Home extends Phaser.Scene {
     }
 
     const second = H.second;
+    // Addendum 5.4: Home writes a step's mark itself; Trip loads the save again when it starts.
+    const mark = (step: OnboardingStep): void => {
+      if (needsNudge(save, step)) writeTripSave(browserStore(), markSeen(save, step));
+    };
     if (summary) {
       if (knownWords(save.brain).length < WORDS.length) this.ajarDoor();
       if (fresh) this.time.delayedCall(H.light.delayMs, () => this.firstLight(fresh, lit, shelf, mimi, speaker));
@@ -87,9 +92,19 @@ export class Home extends Phaser.Scene {
     } else {
       const lock = makeClayButton(this, H.lock.x, H.lock.y, { label: '\u{1F512}', w: H.lock.w, h: H.lock.h, variant: 'plain', ariaName: 'Parents', onTap: () => this.leave(speaker, 'Parent', { from: 'Home' }) });
       lock.setAlpha(0.8);
-      makeClayButton(this, second.x, second.y, { icon: 'home_book', w: second.w, h: second.h, variant: 'plain', ariaName: 'Word Book', onTap: () => this.leave(speaker, 'WordBook') });
+      const book = makeClayButton(this, second.x, second.y, { icon: 'home_book', w: second.w, h: second.h, variant: 'plain', ariaName: 'Word Book', onTap: () => {
+        mark('wordBook');
+        this.leave(speaker, 'WordBook');
+      } });
+      // Beat 8: after a trip her new word lives in the Word Book, so its button hops once until it was opened learnAfter times.
+      if (save.trips > 0 && needsNudge(save, 'wordBook') && !reducedMotion()) this.tweens.add({ targets: book, y: book.y - TUNING.hopPx * 2, duration: TUNING.hopMs, yoyo: true, delay: TUNING.onboarding.bookMs });
     }
-    makeClayButton(this, H.go.x, H.go.y, { label: LABELS.go, icon: 'home_play', w: H.go.w, h: H.go.h, variant: 'primary', ariaName: 'Go', onTap: () => this.leave(speaker, 'Trip') });
+    const go = makeClayButton(this, H.go.x, H.go.y, { label: LABELS.go, icon: 'home_play', w: H.go.w, h: H.go.h, variant: 'primary', ariaName: 'Go', onTap: () => {
+      mark('go');
+      this.leave(speaker, 'Trip');
+    } });
+    // Never on the return screen: there Home and Go stay equal and nothing leans on the child to go on.
+    if (!summary && needsNudge(save, 'go')) this.teachGo(go, !save.seen.go && known.has('apple'), lit, mimi, speaker);
     addRotateOverlay(this);
   }
 
@@ -123,21 +138,59 @@ export class Home extends Phaser.Scene {
     const L = H.light;
     (win.list[1] as Phaser.GameObjects.Graphics).setAlpha(1);
     this.dimShelf(shelf[i]!, false);
+    this.glow(win);
+    const card = drawLeaf(this, word, H.card.x, H.card.y, 'known');
+    playSfx('sparkle');
+    this.reach(mimi, win.x); // beat 8: she points at the window the child just lit
+    if (!reducedMotion()) {
+      this.tweens.add({ targets: card, scale: { from: 0.2, to: 1 }, duration: L.popMs, ease: 'Back.easeOut' });
+      this.tweens.add({ targets: mimi.go, y: H.mimi.y - TUNING.hopPx * 2, duration: TUNING.hopMs, yoyo: true });
+    }
+    void speaker.say(wordLine('book', word)); // the sixth hearing, once (GDD 11)
+  }
+
+  /** A window pops in a ring of rays: its first light, or the window Mimi shows off on the first visit. */
+  private glow(win: Phaser.GameObjects.Container): void {
+    const L = H.light;
     const rays = this.add.graphics({ x: win.x, y: win.y }).lineStyle(8, COLORS.sun, 1);
     for (let k = 0; k < L.rays; k++) {
       const a = (k / L.rays) * Math.PI * 2;
       rays.lineBetween(Math.cos(a) * L.rayInner, Math.sin(a) * L.rayInner, Math.cos(a) * L.rayOuter, Math.sin(a) * L.rayOuter);
     }
-    const card = drawLeaf(this, word, H.card.x, H.card.y, 'known');
-    playSfx('sparkle');
-    if (reducedMotion()) {
-      rays.destroy();
-    } else {
-      this.tweens.add({ targets: win, scale: L.popScale, duration: L.popMs / 2, yoyo: true });
-      this.tweens.add({ targets: rays, alpha: 0, duration: L.rayMs, onComplete: () => rays.destroy() });
-      this.tweens.add({ targets: card, scale: { from: 0.2, to: 1 }, duration: L.popMs, ease: 'Back.easeOut' });
-      this.tweens.add({ targets: mimi.go, y: H.mimi.y - TUNING.hopPx * 2, duration: TUNING.hopMs, yoyo: true });
+    if (reducedMotion()) return void rays.destroy();
+    this.tweens.add({ targets: win, scale: L.popScale, duration: L.popMs / 2, yoyo: true });
+    this.tweens.add({ targets: rays, alpha: 0, duration: L.rayMs, onComplete: () => rays.destroy() });
+  }
+
+  /** Mimi leans toward what she shows, holds, and comes back. */
+  private reach(mimi: Mimi, x: number): void {
+    const r = TUNING.onboarding.reach;
+    if (!reducedMotion()) this.tweens.add({ targets: mimi.body, angle: Math.sign(x - mimi.go.x) * r.deg, duration: r.ms, yoyo: true, hold: r.holdMs });
+  }
+
+  /**
+   * Beat 2 (addendum 5.4). First visit: Mimi taps the window she knows and says so (model, then do). Then Go hops; idle brings the hand, then her cue.
+   * Go is live the whole time and its tap ends all of it (R6); every timer and tween dies with the scene.
+   */
+  private teachGo(go: Phaser.GameObjects.Container, first: boolean, lit: Phaser.GameObjects.Container[], mimi: Mimi, speaker: Speaker): void {
+    const O = TUNING.onboarding;
+    if (first) {
+      const win = lit[WORDS.findIndex((d) => d.id === 'apple')]!;
+      this.time.delayedCall(O.appleMs, () => {
+        this.reach(mimi, win.x);
+        playSfx('pop');
+        this.glow(win);
+        void speaker.say('mimi.apple_know');
+      });
     }
-    void speaker.say(wordLine('book', word)); // the sixth hearing, once (GDD 11)
+    this.time.delayedCall(first ? O.appleMs + O.goAfterMs : 0, () => {
+      inviteLoop(this, [{ objs: [go], x: go.x, top: go.y - H.go.h / 2 }]);
+      const nudge = new Nudge(this);
+      this.input.on('pointerdown', () => nudge.poke());
+      nudge.start([{ x: go.x, y: go.y }], 'mimi.tap_here', (id) => {
+        if (!reducedMotion()) this.tweens.add({ targets: mimi.body, y: -TUNING.hopPx, duration: TUNING.hopMs, yoyo: true });
+        void speaker.say(id);
+      });
+    });
   }
 }

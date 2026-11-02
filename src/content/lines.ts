@@ -53,6 +53,12 @@ const DAY1_LINES = {
   'mimi.go': { speaker: 'mimi', en: "Let's go!", vi: 'Đi thôi!' },
   'mimi.open': { speaker: 'mimi', en: 'Open, please!', vi: 'Mở giúp tớ với!' },
   'mimi.hi': { speaker: 'mimi', en: 'Hi!', vi: 'Chào cậu!' },
+  // Onboarding (addendum 5.5).
+  'mimi.apple_know': { speaker: 'mimi', en: 'Apple! I know apple!', vi: 'Táo! Tớ biết táo!' },
+  'mimi.teach_me': { speaker: 'mimi', en: "Let's teach Mimi!", vi: 'Cùng dạy Mimi nào!' },
+  'mimi.listen': { speaker: 'mimi', en: 'Listen!', vi: 'Nghe này!' },
+  'mimi.tap_here': { speaker: 'mimi', en: 'Tap here!', vi: 'Chạm vào đây!' },
+  'mimi.high_five': { speaker: 'mimi', en: 'High five!', vi: 'Đập tay nào!' },
   'mimi.sleepy': { speaker: 'mimi', en: 'So sleepy…', vi: 'Buồn ngủ quá…' },
   'mimi.remember_v2': { speaker: 'mimi', en: 'I remember!', vi: 'Tớ nhớ rồi!' },
   'robot.yum': { speaker: 'robot', en: 'Yum! Thank you!', vi: 'Ngon quá! Cảm ơn cậu!' },

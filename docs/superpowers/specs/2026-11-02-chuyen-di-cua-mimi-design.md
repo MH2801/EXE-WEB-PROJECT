@@ -271,6 +271,9 @@ Tất cả là giá trị khởi đầu (B), nằm trong `tuning.ts`. Cách ki�
 | `onboarding.nudgeHandMs` | 4000 | Children tap before the hand appears every time: raise; children sit still: lower |
 | `onboarding.nudgeVoiceMs` | 9000 | Same as above |
 | `onboarding.learnAfter` | 2 | Children still hesitate on the third time: raise |
+| `onboarding.appleMs` | 700 | Children miss Mimi tapping the apple window on the first Home visit: raise |
+| `onboarding.goAfterMs` | 2200 | Go starts hopping over Mimi's line: raise; children wait for Go: lower |
+| `onboarding.batteryFallMs` | 1500 | Children still miss the lost battery bar at their first robot: raise |
 | Thời gian một phòng | 10–15 giây | Chậm hơn thì cắt thoại |
 | Thời gian một chuyến | 2–4 phút | Dài hơn thì bớt phòng |
 | Số lần nghe từ mới trong chuyến đầu | Ít nhất 6 | Đếm bằng test |

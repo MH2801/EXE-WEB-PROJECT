@@ -24,6 +24,12 @@ export const TUNING = {
     nudgeVoiceMs: 9000, // B: idle this long and Mimi says the cue once. Change with nudgeHandMs, same reasons.
     learnAfter: 2, // B: a nudge stops for good after the child did the action this many times. Change when children still hesitate on the third time: raise.
     hand: { px: 200, depth: 120, pressPx: 50, pressScale: 0.88, pressMs: 300, liftMs: 300, restMs: 600, sweepMs: 700 }, // B: pointing hand. px = height; the finger tip is the hand's origin and rests pressPx below its target, presses up onto it (scaled by pressScale), lifts, waits restMs, loops; sweepMs = glide to the next target; depth is above the cards (40) and below the dialogue (500)
+    appleMs: 700, // B: first Home visit, the room settles this long before Mimi taps the apple window. Change when children miss the window: raise.
+    goAfterMs: 2200, // B: from the apple window to Go starting to hop, room for her line. Change when Go hops over her line: raise; when children wait for Go: lower.
+    bookMs: 800, // B: plain Home while the Word Book is still new: its button hops once after this. Change with appleMs.
+    reach: { deg: 14, ms: 260, holdMs: 500 }, // B: Mimi leans toward what she shows (a window, the battery), holds, comes back
+    ear: { deg: 12, ms: 220, holdMs: 900 }, // B: first gate, Mimi tilts toward the listen button while she says "Listen!"
+    batteryFallMs: 1500, // B: first robot cards, the lost battery bar falls this slowly (normal 500) so the child sees it go. Change when children still miss it: raise.
   },
   // Background music (addendum 3.1). Volumes are 0..1.
   music: {
