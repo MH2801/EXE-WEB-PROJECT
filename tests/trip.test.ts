@@ -456,7 +456,7 @@ function randomSave(rnd: () => number): TripSave {
     const notThis = state === 'unknown' ? FRUITS.filter((f) => f !== d.answer && rnd() < 0.3) : [];
     brain[d.id] = { state, notThis, learnedFrom: state === 'unknown' ? null : rnd() < 0.5 ? 'child' : 'helper', lastTrip: Math.floor(rnd() * 6) };
   }
-  return { brain, gears: Math.floor(rnd() * 20), trips: Math.floor(rnd() * 10), helped: 0, viSubtitles: false };
+  return { brain, gears: Math.floor(rnd() * 20), trips: Math.floor(rnd() * 10), helped: 0, viSubtitles: false, seen: {} };
 }
 
 describe('whole trips', () => {

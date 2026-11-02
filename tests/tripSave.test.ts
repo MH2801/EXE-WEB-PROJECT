@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { SAVE_KEY_V2, defaultTripSave, loadTripSave, writeTripSave, clearTripSave } from '../src/core/tripSave';
+import { SAVE_KEY_V2, defaultTripSave, loadTripSave, writeTripSave, clearTripSave, needsNudge, markSeen } from '../src/core/tripSave';
+import { TUNING } from '../src/content/tuning';
 import { believe, confirm, refute } from '../src/core/knowledge';
 import type { Store } from '../src/core/save';
 
@@ -59,5 +60,48 @@ describe('tripSave', () => {
     writeTripSave(s, defaultTripSave());
     clearTripSave(s);
     expect(s.m.has(SAVE_KEY_V2)).toBe(false);
+  });
+  describe('onboarding seen', () => {
+    it('default is empty and round-trips', () => {
+      expect(defaultTripSave().seen).toEqual({});
+      const s = memStore();
+      const save = markSeen(markSeen(defaultTripSave(), 'go'), 'fork');
+      writeTripSave(s, save);
+      expect(loadTripSave(s)).toEqual(save);
+      expect(loadTripSave(s).seen).toEqual({ go: 1, fork: 1 });
+    });
+    it('a save from before seen existed loads fully with seen {}', () => {
+      const r = loadRaw(mutate((o) => { o.gears = 7; o.trips = 3; o.brain.banana.state = 'strong'; o.brain.banana.learnedFrom = 'child'; delete o.seen; }));
+      expect(r.seen).toEqual({});
+      expect(r.gears).toBe(7);
+      expect(r.trips).toBe(3);
+      expect(r.brain.banana.state).toBe('strong');
+    });
+    it('a malformed seen loads as {} and the rest is kept', () => {
+      for (const bad of [[], [1], 'go', 5, null, { go: -1 }, { pear: 1 }, { go: 1.5 }, { go: '1' }, { go: 1, pear: 1 }]) {
+        const r = loadRaw(mutate((o) => { o.gears = 7; o.trips = 3; o.seen = bad; }));
+        expect(r.seen).toEqual({});
+        expect(r.gears).toBe(7);
+        expect(r.trips).toBe(3);
+        expect(r.brain.apple.state).toBe('remembered');
+      }
+    });
+    it('needsNudge is true until learnAfter marks', () => {
+      let s = defaultTripSave();
+      expect(needsNudge(s, 'go')).toBe(true);
+      for (let i = 0; i < TUNING.onboarding.learnAfter; i++) {
+        expect(needsNudge(s, 'go')).toBe(true);
+        s = markSeen(s, 'go');
+      }
+      expect(needsNudge(s, 'go')).toBe(false);
+      expect(needsNudge(s, 'fork')).toBe(true);
+    });
+    it('markSeen does not mutate its input', () => {
+      const s = defaultTripSave();
+      const t = markSeen(s, 'card');
+      expect(s.seen).toEqual({});
+      expect(t.seen).toEqual({ card: 1 });
+      expect(t.brain).toBe(s.brain);
+    });
   });
 });

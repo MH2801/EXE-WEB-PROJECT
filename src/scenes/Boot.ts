@@ -15,7 +15,7 @@ const IMAGES = [
 const V2_SVGS = [
   'mimi_idle', 'mimi_happy', 'mimi_think', 'mimi_puzzled', 'mimi_surprised', 'mimi_sleep',
   'item_apple', 'item_banana', 'item_orange', 'item_lemon', 'item_grape',
-  'mom', 'robot', 'cashier', 'helper', 'door', 'chest', 'gate', 'cart', 'home', 'dusk',
+  'mom', 'robot', 'cashier', 'helper', 'door', 'chest', 'gate', 'cart', 'home', 'dusk', 'hand',
 ];
 
 const DAY1 = new URLSearchParams(location.search).has('day1');

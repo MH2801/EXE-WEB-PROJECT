@@ -18,6 +18,13 @@ export const TUNING = {
     settleMs: 400, // B: the landing keeps swallowing taps this long after entry, so a double tap on Play cannot hit Go. Change when a real child still double-taps through.
     happyMs: 1200, // B: how long Mimi shows her happy face after a tap. Change when it feels too short or too long.
   },
+  // First-time help for children (addendum 5 and 7).
+  onboarding: {
+    nudgeHandMs: 4000, // B: idle this long and the pointing hand appears. Change when children tap before the hand every time: raise; when they sit still: lower.
+    nudgeVoiceMs: 9000, // B: idle this long and Mimi says the cue once. Change with nudgeHandMs, same reasons.
+    learnAfter: 2, // B: a nudge stops for good after the child did the action this many times. Change when children still hesitate on the third time: raise.
+    hand: { px: 200, depth: 120, pressPx: 50, pressScale: 0.88, pressMs: 300, liftMs: 300, restMs: 600, sweepMs: 700 }, // B: pointing hand. px = height; the finger tip is the hand's origin and rests pressPx below its target, presses up onto it (scaled by pressScale), lifts, waits restMs, loops; sweepMs = glide to the next target; depth is above the cards (40) and below the dialogue (500)
+  },
   // Background music (addendum 3.1). Volumes are 0..1.
   music: {
     volume: 0.35, // B: calm under the lines and the sounds. Change when a parent says it is too loud or too quiet.

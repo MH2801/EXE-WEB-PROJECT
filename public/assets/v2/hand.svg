@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="300" viewBox="0 0 200 300" role="img" aria-label="A pointing hand">
+<g stroke="#1B2470" stroke-width="6" stroke-linejoin="round" stroke-linecap="round">
+<ellipse cx="48" cy="168" rx="24" ry="34" fill="#FFFFFF" transform="rotate(-18 48 168)"/>
+<rect x="78" y="8" width="44" height="160" rx="22" fill="#FFFFFF"/>
+<rect x="44" y="104" width="112" height="140" rx="40" fill="#FFFFFF"/>
+<rect x="52" y="226" width="96" height="40" rx="14" fill="#7C8CF0"/>
+<path d="M100 150h38M100 184h38" fill="none"/>
+</g>
+<rect x="82" y="96" width="36" height="14" fill="#FFFFFF"/>
+<path d="M76 280v12M100 276v20M124 280v12" stroke="#7C8CF0" stroke-width="6" stroke-linecap="round" fill="none"/>
+</svg>

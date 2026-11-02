@@ -1,12 +1,15 @@
+import { TUNING } from '../content/tuning';
 import { WORDS } from '../content/words';
 import { dropBeliefs, freshBrain, knownWords, type Brain, type WordRecord, type WordState } from './knowledge';
 import type { Store } from './save';
 import { FRUITS, type FruitId } from './types';
 
-export type TripSave = { brain: Brain; gears: number; trips: number; helped: number; viSubtitles: boolean };
+export const ONBOARDING_STEPS = ['go', 'mysteryDoor', 'book', 'stall', 'yesNo', 'fork', 'card', 'robotCard', 'wordBook'] as const;
+export type OnboardingStep = (typeof ONBOARDING_STEPS)[number];
+export type TripSave = { brain: Brain; gears: number; trips: number; helped: number; viSubtitles: boolean; seen: Partial<Record<OnboardingStep, number>> };
 export const SAVE_KEY_V2 = 'dtd.save.v2';
 
-export const defaultTripSave = (): TripSave => ({ brain: freshBrain(), gears: 0, trips: 0, helped: 0, viSubtitles: false });
+export const defaultTripSave = (): TripSave => ({ brain: freshBrain(), gears: 0, trips: 0, helped: 0, viSubtitles: false, seen: {} });
 
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 const isCount = (v: unknown): v is number => typeof v === 'number' && Number.isInteger(v) && v >= 0;
@@ -18,6 +21,13 @@ function parseRecord(v: unknown): WordRecord | null {
   if (v.learnedFrom !== null && v.learnedFrom !== 'child' && v.learnedFrom !== 'helper') return null;
   if (!isCount(v.lastTrip)) return null;
   return { state: v.state as WordState, notThis: v.notThis as FruitId[], learnedFrom: v.learnedFrom, lastTrip: v.lastTrip };
+}
+
+// Unlike every other field, a bad `seen` only resets onboarding: saves from before it existed must keep their progress.
+function parseSeen(v: unknown): TripSave['seen'] {
+  if (!isObj(v)) return {};
+  const keys = Object.keys(v);
+  return keys.every((k) => (ONBOARDING_STEPS as readonly string[]).includes(k) && isCount(v[k])) ? (v as TripSave['seen']) : {};
 }
 
 function parse(raw: unknown): TripSave | null {
@@ -33,8 +43,11 @@ function parse(raw: unknown): TripSave | null {
   // A belief only lives for one trip, so it never survives a reload.
   const kept = dropBeliefs(brain);
   if (knownWords(kept).length === 0) return null; // generateTrip needs at least one known word (apple)
-  return { brain: kept, gears: raw.gears, trips: raw.trips, helped: raw.helped, viSubtitles: raw.viSubtitles };
+  return { brain: kept, gears: raw.gears, trips: raw.trips, helped: raw.helped, viSubtitles: raw.viSubtitles, seen: parseSeen(raw.seen) };
 }
+
+export const needsNudge = (save: TripSave, step: OnboardingStep): boolean => (save.seen[step] ?? 0) < TUNING.onboarding.learnAfter;
+export const markSeen = (save: TripSave, step: OnboardingStep): TripSave => ({ ...save, seen: { ...save.seen, [step]: (save.seen[step] ?? 0) + 1 } });
 
 export function loadTripSave(store: Store | null): TripSave {
   if (!store) return defaultTripSave();
