@@ -1,15 +1,14 @@
 # Handoff
 
-## 0. Đang làm: Chuyến đi của Mimi
-Branch `feat/chuyen-di`, following the [plan](superpowers/plans/2026-11-02-chuyen-di-cua-mimi.md). Tasks 1–12 are done: a full trip is playable with Mimi reactions, jokes and game feel, and browser tests cover trips (`tests/e2e/trip.spec.ts`). **Stopped for the founder feel play after Task 11.** Next: founder feedback, then Task 13.
-- To play: `npm run dev`, press Go. Add `?seed=7` to the URL to repeat a trip.
-- Pattern A is a new save. For B or C, paste this in the DevTools console; `n` = 3 gives B, `n` = 5 gives C. `localStorage.removeItem('dtd.save.v2')` goes back to A.
-  ```js
-  n=3;localStorage.setItem('dtd.save.v2',JSON.stringify({brain:Object.fromEntries(['apple','banana','orange','lemon','grape','red','yellow','green'].map((w,i)=>[w,{state:i<n?'remembered':'unknown',notThis:[],learnedFrom:null,lastTrip:0}])),gears:0,trips:1,helped:0,viSubtitles:false}));location.reload()
-  ```
-- Founder reactions, quoted exactly: `docs/moments.md`. Separate onboarding stays in the backlog (`docs/product/vision.md`) until the founder decides after this play.
-- Review reports: `build/review-batch-a.md`, `build/ponytail-batch-a.md`, `build/review-batch-b.md`, `build/ponytail-batch-b.md`. Screenshots: `build/montage-b-rooms.png`, `build/montage-b-fixes.png`, `build/shots/b-*.png`.
-- Decisions and items carried to Tasks 11 and 12: `.superpowers/sdd/2026-11-02-chuyen-di-cua-mimi/progress.md`.
+## 0. Now: onboarding batch done, waiting for the founder
+Branch `feat/chuyen-di`. Trip plan Tasks 1–12 done; **Task 13 not started**. The landing/loading/onboarding batch ([addendum](superpowers/specs/2026-11-02-landing-loading-onboarding-design.md), [plan](superpowers/plans/2026-11-02-landing-loading-onboarding.md)) is done: O1 landing page that hosts loading, M1 background music (founder request, addendum §3.1), O2 nudge hand and `seen` flags, O3 first-trip lock and first-time beats, O4 browser tests. Not pushed.
+- To play: `npm run dev`, open the printed address (usually http://localhost:5173), tap Play. `?seed=7` repeats a trip; `?day1=1` opens Day 1.
+- To see onboarding again: Parent area (lock icon) → reset, or in DevTools `localStorage.removeItem('dtd.save.v2'); location.reload()`. A save with `seen` counts at `TUNING.onboarding.learnAfter` (2) shows no nudges.
+- Founder check (addendum §9): one adult who has never seen the game plays trips 1 and 2 with no help while the founder watches silently. Watch Go, the "?" door, the Book, Yes/No. Pass = they reach Return in trip 1 and can say Mimi did what they taught.
+- Also for the founder: listen to the music level, the ducking and the cashier silence; judge whether beat 11's battery fall (small, top right) reads as clear.
+- Open: music licence not confirmed (`docs/assets/CREDITS.md`, blocks sale); real touch devices not tested; nudge hand timing measured only on a loaded headless machine (late there); a full Playwright run had one timing flake in the landing double-tap test (passes alone 3/3).
+- Reviews: `build/review-landing.md`, `build/review-music.md`, `build/review-onboarding.md`, `build/ponytail-onboarding.md` (Ship, 3 nice-to-haves). Screenshots: `build/onb-montage.png`, `build/ctl-montage.png`.
+- Decisions taken during the batch: `.superpowers/sdd/2026-11-02-landing-loading-onboarding/progress.md` (rulings R1–R15).
 
 ## 1. Hiện trạng
 Nhánh `feat/mvp`: Batch A, B, C, D xong, mỗi task một commit, chưa push. `tsc`, 88 test đơn vị và `build` đều qua. 14 test trình duyệt (e2e) có trong `tests/e2e/`. Chưa có repo GitHub và tài khoản Cloudflare.

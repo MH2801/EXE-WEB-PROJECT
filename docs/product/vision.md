@@ -28,7 +28,7 @@ Lối chơi từ Day 2 trở đi: [game-vision.md](game-vision.md).
 
 ## Backlog sau MVP
 Mỗi mục cần spec riêng.
-- Onboarding for a first-time player beyond in-play hints. Founder's first play felt confusing (docs/moments.md); decide after the Task 11 play.
+- A parent switch to mute the background music (music added in the onboarding batch, no switch yet).
 - Hai mức ghi nhớ, từ có nhiều đặc tính, "từ mạnh".
 - Kính góc nhìn của Mimi. Gợi ý trong Sổ giảm dần.
 - Sentence recipe: từ là nguyên liệu, cấu trúc câu là công thức.
