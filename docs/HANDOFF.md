@@ -1,12 +1,13 @@
 # Handoff
 
 ## 0. Đang làm: Chuyến đi của Mimi
-Branch `feat/chuyen-di`, following the [plan](superpowers/plans/2026-11-02-chuyen-di-cua-mimi.md). Tasks 1–10 are done: a full trip is playable in the raw build (map, six room types, cards, battery, gears, return screen). Feel is not polished yet. **Now stopped at the founder playtest checkpoint after Task 10.** Next: founder feedback, then Task 11.
+Branch `feat/chuyen-di`, following the [plan](superpowers/plans/2026-11-02-chuyen-di-cua-mimi.md). Tasks 1–12 are done: a full trip is playable with Mimi reactions, jokes and game feel, and browser tests cover trips (`tests/e2e/trip.spec.ts`). **Stopped for the founder feel play after Task 11.** Next: founder feedback, then Task 13.
 - To play: `npm run dev`, press Go. Add `?seed=7` to the URL to repeat a trip.
 - Pattern A is a new save. For B or C, paste this in the DevTools console; `n` = 3 gives B, `n` = 5 gives C. `localStorage.removeItem('dtd.save.v2')` goes back to A.
   ```js
   n=3;localStorage.setItem('dtd.save.v2',JSON.stringify({brain:Object.fromEntries(['apple','banana','orange','lemon','grape','red','yellow','green'].map((w,i)=>[w,{state:i<n?'remembered':'unknown',notThis:[],learnedFrom:null,lastTrip:0}])),gears:0,trips:1,helped:0,viSubtitles:false}));location.reload()
   ```
+- Founder reactions, quoted exactly: `docs/moments.md`. Separate onboarding stays in the backlog (`docs/product/vision.md`) until the founder decides after this play.
 - Review reports: `build/review-batch-a.md`, `build/ponytail-batch-a.md`, `build/review-batch-b.md`, `build/ponytail-batch-b.md`. Screenshots: `build/montage-b-rooms.png`, `build/montage-b-fixes.png`, `build/shots/b-*.png`.
 - Decisions and items carried to Tasks 11 and 12: `.superpowers/sdd/2026-11-02-chuyen-di-cua-mimi/progress.md`.
 
