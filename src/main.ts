@@ -39,6 +39,7 @@ if (import.meta.env.VITE_E2E === '1') {
     phase: () => game.scene.isActive('Trip') ? (trip().state?.phase ?? 'Trip') : (game.scene.isActive('Memory') ? 'done' : mission().state?.phase) ?? game.scene.getScenes(true)[0]?.scene.key ?? 'none',
     point(name: string): Pt | null {
       if (name === 'go') return screen(TUNING.home.go);
+      if (name === 'lock') return screen(TUNING.home.lock);
       if (game.scene.isActive('Trip')) {
         const p = name.startsWith('card_') ? trip().cards.center(name.slice(5)) : trip().rooms.center(name);
         return p ? screen(p) : null;
