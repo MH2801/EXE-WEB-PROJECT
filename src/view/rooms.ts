@@ -276,7 +276,7 @@ export class RoomView {
     const items: InviteItem[] =
       kind === 'door' ? this.doorItems
       : kind === 'stall' ? [...this.stalls.values()].filter((s) => !s.marked).map((s) => ({ objs: [s.box], x: s.x, top: s.y - k.itemPx / 2 }))
-      : kind === 'ask' ? this.asks.map((b) => ({ objs: [b], x: b.x, top: k.ask.y - k.ask.h / 2 }))
+      : kind === 'ask' ? this.asks.map((b) => ({ objs: [b], x: b.x, top: k.ask.y })) // the reduced-motion star sits on the button's face, clear of the stalls above
       : this.lid ? [{ objs: [this.lid.img, this.lid.lid], x: V.chest.x, top: this.lid.img.y - this.lid.img.displayHeight }] : [];
     this.stopInvite = inviteLoop(this.scene, items);
   }

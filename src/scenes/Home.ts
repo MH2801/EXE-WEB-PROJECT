@@ -184,7 +184,8 @@ export class Home extends Phaser.Scene {
       });
     }
     this.time.delayedCall(first ? O.appleMs + O.goAfterMs : 0, () => {
-      inviteLoop(this, [{ objs: [go], x: go.x, top: go.y - H.go.h / 2 }]);
+      // top = Go's centre, so the reduced-motion star sits on Go's own face, where the nudge star goes, clear of the Word Book button above.
+      inviteLoop(this, [{ objs: [go], x: go.x, top: go.y }]);
       const nudge = new Nudge(this);
       this.input.on('pointerdown', () => nudge.poke());
       nudge.start([{ x: go.x, y: go.y }], 'mimi.tap_here', (id) => {

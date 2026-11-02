@@ -222,7 +222,7 @@ export const TUNING = {
       talk: { px: 8, ms: 150 }, // B, whoever stands in the room bobs while it speaks
       gate: { again: { x: 1450, y: 600, size: 150, glyph: 80 }, liftTo: 0.06, liftMs: 420 }, // B, the listen-again button; the gate rolls up
       robot: { bubble: { x: 1450, y: 470, w: 260, h: 200, pic: 130, popMs: 160, tail: [-0.4, 0.1, -0.62, 0.32, -0.28, 0.3] }, dropPx: 300, dropMs: 420, swayDeg: 3, swayMs: 650, aside: 700, asideMs: 420 }, // B, what the robot wants; it drops in, sways, and hops off when fed
-      invite: { hopPx: 14, ms: 420, restMs: 900, staggerMs: 140, leanDeg: 6, starPx: 28, starDy: 34 }, // B, R24: slow hop on what can be tapped; Mimi leans the same way. Star = reduced motion
+      invite: { hopPx: 14, ms: 420, restMs: 900, staggerMs: 140, leanDeg: 6, starPx: 28, starDy: 34, starLine: 4 }, // B, R24: slow hop on what can be tapped; Mimi leans the same way. Star = reduced motion
       tail: { w: 64, len: 60, lean: 60, margin: 80, line: 8, fill: 0xe8f6ff, edge: 0x3aa8ff, depth: 501 }, // B, dialogue tail toward the speaker; colours match the box
       helper: { px: 300, y: 740, ms: 900, depth: 14 }, // B, the helper robot walks to the stall in this long, and back
       fx: {

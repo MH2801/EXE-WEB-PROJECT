@@ -65,21 +65,23 @@ export class Nudge {
     const H = TUNING.onboarding.hand;
     if (reducedMotion()) {
       const I = TUNING.trip.view.invite;
-      this.shown = this.targets.map(({ x, y }) => this.scene.add.star(x, y - I.starDy, TUNING.burst.points, I.starPx / 2, I.starPx, COLORS.sun).setDepth(H.depth));
+      this.shown = this.targets.map(({ x, y }) => this.scene.add.star(x, y - I.starDy, TUNING.burst.points, I.starPx / 2, I.starPx, COLORS.sun).setStrokeStyle(I.starLine, COLORS.indigo).setDepth(H.depth));
       return;
     }
     const base = H.px / this.scene.textures.get('v2_hand').getSourceImage().height;
     // A low target (Go, Yes/No, cards) leaves no room for a hand hanging below it. Then the hand comes from the right, pointing left:
     // its fingertip sits on the target's centre and its body covers no button above it (Word Book) and no stall (the picked fruit).
     const side = this.targets.some((t) => t.y + H.pressPx + H.px > TUNING.gameH);
-    const k = side ? 'x' : 'y';
-    const rest = (t: Pt): Pt => (side ? { x: t.x + H.pressPx, y: t.y } : { x: t.x, y: t.y + H.pressPx });
+    // From the right, unless that would leave the screen (Go sits at the right edge): then from below-left, over Go's own face and the grass,
+    // clear of the Word Book above and the shelf to the left. u points from the fingertip along the hand's body.
+    const u = !side ? { x: 0, y: 1 } : this.targets.some((t) => t.x + H.pressPx + H.px > TUNING.gameW) ? { x: -Math.SQRT1_2, y: Math.SQRT1_2 } : { x: 1, y: 0 };
+    const rest = (t: Pt): Pt => ({ x: t.x + u.x * H.pressPx, y: t.y + u.y * H.pressPx });
     // Each sweep starts at a random option, so the first press is not always the same one (Yes, the safe door). The order stays cyclic.
     const n = this.targets.length;
     const s0 = Math.floor(Math.random() * n);
     const order = this.targets.map((_, i) => this.targets[(s0 + i) % n]!);
     const first = rest(order[0]!);
-    const hand = this.scene.add.image(first.x, first.y, 'v2_hand').setOrigin(0.5, 0).setAngle(side ? -90 : 0).setScale(base).setDepth(H.depth);
+    const hand = this.scene.add.image(first.x, first.y, 'v2_hand').setOrigin(0.5, 0).setAngle(Phaser.Math.RadToDeg(Math.atan2(-u.x, u.y))).setScale(base).setDepth(H.depth);
     this.shown = [hand];
     // Each target: glide to it, press onto it, lift. The chain loops forever, so the hand never settles on one target.
     const steps = order.flatMap((t, i): Phaser.Types.Tweens.TweenBuilderConfig[] => {
@@ -87,8 +89,8 @@ export class Nudge {
       const at = rest(t);
       return [
         ...(n > 1 ? [{ targets: hand, x: { from: from.x, to: at.x }, y: { from: from.y, to: at.y }, duration: H.sweepMs, ease: 'Sine.InOut' }] : []),
-        { targets: hand, [k]: { from: at[k], to: t[k] }, scale: { from: base, to: base * H.pressScale }, duration: H.pressMs, ease: 'Sine.Out' },
-        { targets: hand, [k]: { from: t[k], to: at[k] }, scale: { from: base * H.pressScale, to: base }, duration: H.liftMs, ease: 'Sine.In', completeDelay: H.restMs },
+        { targets: hand, x: { from: at.x, to: t.x }, y: { from: at.y, to: t.y }, scale: { from: base, to: base * H.pressScale }, duration: H.pressMs, ease: 'Sine.Out' },
+        { targets: hand, x: { from: t.x, to: at.x }, y: { from: t.y, to: at.y }, scale: { from: base * H.pressScale, to: base }, duration: H.liftMs, ease: 'Sine.In', completeDelay: H.restMs },
       ];
     });
     this.tween = this.scene.tweens.chain({ tweens: steps, loop: -1 });

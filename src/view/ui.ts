@@ -225,7 +225,8 @@ export type InviteItem = { objs: { y: number }[]; x: number; top: number };
 export function inviteLoop(scene: Phaser.Scene, items: InviteItem[]): () => void {
   const I = TUNING.trip.view.invite;
   if (reducedMotion()) {
-    const stars = items.map(({ x, top }) => scene.add.star(x, top - I.starDy, TUNING.burst.points, I.starPx / 2, I.starPx, COLORS.sun).setDepth(TUNING.trip.layout.depth));
+    // The Indigo edge keeps a star seen on a Sun button (Home's Go).
+    const stars = items.map(({ x, top }) => scene.add.star(x, top - I.starDy, TUNING.burst.points, I.starPx / 2, I.starPx, COLORS.sun).setStrokeStyle(I.starLine, COLORS.indigo).setDepth(TUNING.trip.layout.depth));
     return () => stars.forEach((s) => s.destroy());
   }
   const held = items.flatMap((it, i) =>
