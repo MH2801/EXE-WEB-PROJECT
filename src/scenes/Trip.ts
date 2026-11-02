@@ -15,6 +15,7 @@ import { leanTiming, RoomView, type InviteKind, type Tw } from '../view/rooms';
 import { runEffects, type Handlers } from '../view/runner';
 import { playSfx } from '../view/sfx';
 import { COLORS, CSS, FONT_DISPLAY } from '../view/theme';
+import { hushMusic } from '../view/music';
 import { addRotateOverlay, drawLeaf, ensureIcons, fitImage, makeSpeaker, reducedMotion } from '../view/ui';
 
 const V = TUNING.trip.view;
@@ -38,6 +39,7 @@ export class Trip extends Phaser.Scene {
   private busy = false;
   private fresh = false; // true until the microtask after a dispatch, so the tap that started a batch does not skip it
   private left = false;
+  private hushing = false; // the music is silent for the Cashier's wait
   private tabHidden = false;
   private mapping = false;
   private fast = false;
@@ -99,6 +101,7 @@ export class Trip extends Phaser.Scene {
     this.game.events.on(Phaser.Core.Events.VISIBLE, this.onVisible, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.left = true;
+      this.unhush(); // the wait's timer dies with the scene
       this.pending = null;
       this.speaker.skip(); // resolves a line in flight; the guarded handlers then do nothing
       this.stopIdle();
@@ -239,6 +242,11 @@ export class Trip extends Phaser.Scene {
   }
 
   /** On the scene clock, so it stops with a hidden tab. Never skipped by a tap. */
+  private unhush(): void {
+    this.hushing = false;
+    hushMusic(false);
+  }
+
   private wait(ms: number): Promise<void> {
     return new Promise<void>((res) => this.time.delayedCall(ms, res));
   }
@@ -465,9 +473,15 @@ export class Trip extends Phaser.Scene {
       const c = V.cashier;
       this.mimi.pose('puzzled');
       this.rooms.cashierLook();
+      this.hushing = true;
+      hushMusic(true);
       this.tweens.add({ targets: this.mimi.body, scaleX: c.breathX, scaleY: c.breathY, yoyo: true, ...leanTiming() });
     },
-    wait: (e) => this.wait(e.ms),
+    // Hush covers the Cashier's suspense only (cashierLook then this wait); the stall's wait stays musical.
+    wait: (e) => {
+      if (!this.hushing) return this.wait(e.ms);
+      return this.wait(e.ms).then(() => this.unhush());
+    },
     // The save is written once, by goHome: beliefs and basket gears may only reach it through applyTrip.
     save: noop,
     goHome: (e) => {

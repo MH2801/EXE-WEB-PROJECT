@@ -1,4 +1,5 @@
 import { TUNING } from './content/tuning';
+import { duckWhile } from './view/music';
 import { createSpeaker } from './view/speech';
 
 type Target = 'Home' | 'WordBook' | 'Parent';
@@ -62,7 +63,7 @@ mimi?.addEventListener('click', () => {
       playFile: () => { throw new Error('no recorded clips on the landing'); },
       setTimer: (ms, fn) => { const id = setTimeout(fn, ms); return () => clearTimeout(id); },
     });
-    speaker.say('mimi.hi').catch(() => {}); // speech never blocks the page
+    duckWhile(speaker.say('mimi.hi')).catch(() => {}); // speech never blocks the page
   } catch (e) {
     console.error(e);
   }

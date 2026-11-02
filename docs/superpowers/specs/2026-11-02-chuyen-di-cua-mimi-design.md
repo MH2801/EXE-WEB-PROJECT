@@ -263,6 +263,9 @@ Tất cả là giá trị khởi đầu (B), nằm trong `tuning.ts`. Cách ki�
 | `patternB` | R từ 3 | Vào mẫu B quá sớm thì tăng |
 | `patternC` | R từ 5 | Vào mẫu C quá sớm thì tăng |
 | `fontWaitMs` | 2000 | Chữ đổi font giữa chừng thì tăng; vào game thấy chậm thì giảm |
+| `music.volume` | 0.35 | Cha mẹ nói nhạc to hoặc nhỏ quá thì chỉnh |
+| `music.duckVolume` | 0.12 | Nghe lời thoại khó thì giảm |
+| `music.fadeMs` | 400 | Nhạc tụt hoặc lên nghe đột ngột thì tăng |
 | Thời gian một phòng | 10–15 giây | Chậm hơn thì cắt thoại |
 | Thời gian một chuyến | 2–4 phút | Dài hơn thì bớt phòng |
 | Số lần nghe từ mới trong chuyến đầu | Ít nhất 6 | Đếm bằng test |

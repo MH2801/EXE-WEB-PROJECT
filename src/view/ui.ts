@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { duckWhile } from './music';
 import { createSpeaker } from './speech';
 import { RECORDED } from '../content/audio-manifest';
 import { TUNING } from '../content/tuning';
@@ -32,7 +33,7 @@ export function makeSpeaker(scene: Phaser.Scene): ReturnType<typeof createSpeake
     },
   });
   scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => speaker.skip());
-  return speaker;
+  return { ...speaker, say: (id) => duckWhile(speaker.say(id)) };
 }
 
 export function makeButton(

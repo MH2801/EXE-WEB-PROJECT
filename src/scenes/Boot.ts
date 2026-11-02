@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { TUNING } from '../content/tuning';
+import { startMusic, loadMusic } from '../view/music';
 import { hideLanding, onEnter, ready, showProgress } from '../landing';
 import { FONT_BODY, FONT_DISPLAY } from '../view/theme';
 
@@ -35,7 +36,7 @@ export class Boot extends Phaser.Scene {
     }
     onEnter((t) => {
       try {
-        (this.sound as Phaser.Sound.WebAudioSoundManager).context?.resume().catch(() => {}); // the tap is the user gesture browsers need
+        startMusic(this.game); // the tap is the user gesture browsers need: resumes the sound context, starts the music
       } catch (e) {
         console.error(e);
       }
@@ -81,6 +82,7 @@ export class Boot extends Phaser.Scene {
   private finish(): void {
     if (this.finished) return; // create() after a cut, or a cut after create()
     this.finished = true;
+    if (!DAY1) loadMusic(this.game); // after the art, so it cannot slow the buttons; a late file just starts late
     // A file that downloads but cannot decode fires no loaderror; a cut leaves files unloaded.
     for (const k of [...IMAGES, ...V2_SVGS.map((v) => `v2_${v}`)]) if (!this.textures.exists(k)) this.placeholder(k);
     // The probe text spans both unicode-range subsets; the default space would leave the Vietnamese files unloaded.

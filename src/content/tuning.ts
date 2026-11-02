@@ -18,6 +18,12 @@ export const TUNING = {
     settleMs: 400, // B: the landing keeps swallowing taps this long after entry, so a double tap on Play cannot hit Go. Change when a real child still double-taps through.
     happyMs: 1200, // B: how long Mimi shows her happy face after a tap. Change when it feels too short or too long.
   },
+  // Background music (addendum 3.1). Volumes are 0..1.
+  music: {
+    volume: 0.35, // B: calm under the lines and the sounds. Change when a parent says it is too loud or too quiet.
+    duckVolume: 0.12, // B: still faintly there while Mimi or the robot speaks. Change when a line is hard to hear.
+    fadeMs: 400, // B: down and up, soft enough not to be a "sound". Change when the dip feels abrupt or slow.
+  },
   yesFill: 0x1e7a44, // B: white label on it = 5.35:1 (WCAG; spec 14 needs 4.5)
   noFill: 0xc23a33, // B: white label on it = 5.32:1
   choiceLabel: '#ffffff', // B

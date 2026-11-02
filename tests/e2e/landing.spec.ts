@@ -29,8 +29,8 @@ test.describe('landing', () => {
     test(`${id} reaches ${scene} once; a second tap on Go's corner does nothing`, async ({ page }) => {
       await page.goto('/');
       await page.evaluate(() => { (window as any).starts = 0; (window as any).__game.scene.getScene('Home').events.on('create', () => (window as any).starts++); });
+      const go = await page.evaluate(() => (window as any).__dtd.point('go')); // before the tap: a slow machine must not stretch the child's 150 ms
       await page.locator(id).click();
-      const go = await page.evaluate(() => (window as any).__dtd.point('go'));
       await page.waitForTimeout(150); // a child's second tap, aimed at where Go will be
       await page.mouse.click(go.x, go.y);
       await page.waitForTimeout(TUNING.landing.settleMs + 600);
@@ -83,9 +83,30 @@ test.describe('landing', () => {
     await expect(page.locator('#mimi')).not.toHaveClass(/wave/, { timeout: 3000 });
   });
 
+  test('music starts on Play as one looping sound, and a repeat tap adds no second copy', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('#play').click();
+    const music = () => page.evaluate(() => (window as any).__game.sound.getAll('music').map((m: any) => m.isPlaying && m.loop));
+    await expect.poll(music, { timeout: 15_000 }).toEqual([true]);
+    await page.waitForTimeout(500);
+    expect(await music()).toEqual([true]);
+  });
+
+  test('a missing music file changes nothing but the music', async ({ page }) => {
+    await page.route('**/audio/music.mp3', (route) => route.abort());
+    await page.goto('/');
+    await page.locator('#play').click();
+    await expect.poll(() => phase(page), { timeout: 15_000 }).toBe('Home');
+    expect(await page.evaluate(() => (window as any).__game.sound.getAll('music').length)).toBe(0);
+  });
+
   test('?day1=1 has no landing and starts Title', async ({ page }) => {
+    const requests: string[] = [];
+    page.on('request', (r) => requests.push(r.url()));
     await page.goto('/?day1=1');
     await expect(page.locator('#landing')).toHaveCount(0);
     await expect.poll(() => phase(page), { timeout: 30_000 }).toBe('Title');
+    expect(requests.filter((u) => u.includes('music.mp3'))).toEqual([]);
+    expect(await page.evaluate(() => (window as any).__game.sound.getAll('music').length)).toBe(0);
   });
 });
