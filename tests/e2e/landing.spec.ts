@@ -26,10 +26,16 @@ test.describe('landing', () => {
   });
 
   for (const [id, scene] of [['#play', 'Home'], ['#words', 'WordBook'], ['#lock', 'Parent']] as const) {
-    test(`${id} reaches ${scene}, once even on a double tap`, async ({ page }) => {
+    test(`${id} reaches ${scene} once; a second tap on Go's corner does nothing`, async ({ page }) => {
       await page.goto('/');
-      await page.locator(id).dblclick();
-      await expect.poll(() => page.evaluate(() => (window as any).__game.scene.getScenes(true).map((s: any) => s.scene.key))).toEqual([scene]);
+      await page.evaluate(() => { (window as any).starts = 0; (window as any).__game.scene.getScene('Home').events.on('create', () => (window as any).starts++); });
+      await page.locator(id).click();
+      const go = await page.evaluate(() => (window as any).__dtd.point('go'));
+      await page.waitForTimeout(150); // a child's second tap, aimed at where Go will be
+      await page.mouse.click(go.x, go.y);
+      await page.waitForTimeout(TUNING.landing.settleMs + 600);
+      expect(await page.evaluate(() => (window as any).__game.scene.getScenes(true).map((s: any) => s.scene.key))).toEqual([scene]);
+      if (scene === 'Home') expect(await page.evaluate(() => (window as any).starts)).toBe(1);
       await expect(page.locator('#landing')).toHaveCount(0);
     });
   }
@@ -51,6 +57,20 @@ test.describe('landing', () => {
     expect(Date.now() - t0).toBeLessThan(TUNING.landing.maxWaitMs + 3000);
     await page.locator('#play').click();
     await expect.poll(() => phase(page), { timeout: 15_000 }).toBe('Home');
+  });
+
+  test('every asset request hangs: Play still reaches Home in bounded time', async ({ page }) => {
+    await page.route('**/assets/**', () => {});
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+    await expect(page.locator('#play')).toBeVisible({ timeout: TUNING.landing.maxWaitMs + 4000 });
+    await page.locator('#play').click();
+    await expect.poll(() => phase(page), { timeout: TUNING.fontWaitMs + 8000 }).toBe('Home');
+  });
+
+  test('Mimi bobs again after her wave', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('#mimi').click({ force: true }); // it bobs, so it is never "stable"
+    await expect(page.locator('#mimi')).not.toHaveClass(/wave/, { timeout: 3000 });
   });
 
   test('?day1=1 has no landing and starts Title', async ({ page }) => {

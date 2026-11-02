@@ -15,6 +15,7 @@ export const TUNING = {
   // Landing page that hosts loading (addendum 3).
   landing: {
     maxWaitMs: 8000, // B: buttons show by now, counted from page start, even if an asset hangs. Change when real devices load slower or faster.
+    settleMs: 400, // B: the landing keeps swallowing taps this long after entry, so a double tap on Play cannot hit Go. Change when a real child still double-taps through.
     happyMs: 1200, // B: how long Mimi shows her happy face after a tap. Change when it feels too short or too long.
   },
   yesFill: 0x1e7a44, // B: white label on it = 5.35:1 (WCAG; spec 14 needs 4.5)

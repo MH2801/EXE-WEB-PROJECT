@@ -23,9 +23,15 @@ export function onEnter(cb: (t: Target) => void): void {
   enterCb = cb;
 }
 
+/** Invisible but still in place for settleMs, so the second tap of a double tap cannot reach the scene below. */
 export function hideLanding(): void {
-  root?.remove();
+  if (!root) return;
+  root.style.opacity = '0';
+  setTimeout(() => root.remove(), TUNING.landing.settleMs);
 }
+
+// Phaser listens on window too; taps on the landing (and its settle time) must never reach it.
+for (const ev of ['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'touchstart', 'touchend']) root?.addEventListener(ev, (e) => e.stopPropagation());
 
 function enter(t: Target): void {
   if (!isReady || entered) return; // buttons are hidden until ready; a double tap enters once
@@ -36,6 +42,7 @@ function enter(t: Target): void {
 root?.querySelectorAll<HTMLElement>('[data-go]').forEach((b) => b.addEventListener('click', () => enter(b.dataset.go as Target)));
 
 const mimi = document.getElementById('mimi');
+mimi?.addEventListener('animationend', (e) => e.animationName === 'wave' && mimi.classList.remove('wave')); // back to bobbing
 let calm: ReturnType<typeof setTimeout> | undefined;
 mimi?.addEventListener('click', () => {
   mimi.classList.remove('wave');
