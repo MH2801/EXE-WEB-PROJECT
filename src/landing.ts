@@ -25,7 +25,7 @@ export function onEnter(cb: (t: Target) => void): void {
 
 /** Invisible but still in place for settleMs, so the second tap of a double tap cannot reach the scene below. */
 export function hideLanding(): void {
-  if (!root) return;
+  if (!root || root.style.opacity === '0') return; // a second call must not schedule a second remove
   root.style.opacity = '0';
   setTimeout(() => root.remove(), TUNING.landing.settleMs);
 }
@@ -39,7 +39,12 @@ function enter(t: Target): void {
   enterCb?.(t);
 }
 
-root?.querySelectorAll<HTMLElement>('[data-go]').forEach((b) => b.addEventListener('click', () => enter(b.dataset.go as Target)));
+root?.querySelectorAll<HTMLElement>('[data-go]').forEach((b) => {
+  b.addEventListener('click', () => enter(b.dataset.go as Target));
+  // Instant visual answer: entry may wait for fonts after a slow load. Held until the scene enters.
+  b.addEventListener('pointerdown', () => isReady && b.classList.add('pressed'));
+  for (const ev of ['pointercancel', 'pointerleave']) b.addEventListener(ev, () => !entered && b.classList.remove('pressed'));
+});
 
 const mimi = document.getElementById('mimi');
 mimi?.addEventListener('animationend', (e) => e.animationName === 'wave' && mimi.classList.remove('wave')); // back to bobbing

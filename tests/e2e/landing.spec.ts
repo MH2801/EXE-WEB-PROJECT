@@ -67,6 +67,16 @@ test.describe('landing', () => {
     await expect.poll(() => phase(page), { timeout: TUNING.fontWaitMs + 8000 }).toBe('Home');
   });
 
+  test('a tapped button shows its pressed state at once', async ({ page }) => {
+    await page.goto('/');
+    const b = await page.locator('#play').boundingBox();
+    await page.mouse.move(b!.x + b!.width / 2, b!.y + b!.height / 2);
+    await page.mouse.down();
+    await expect(page.locator('#play')).toHaveClass(/pressed/, { timeout: 500 });
+    await expect(page.locator('#words')).not.toHaveClass(/pressed/);
+    await page.mouse.up();
+  });
+
   test('Mimi bobs again after her wave', async ({ page }) => {
     await page.goto('/');
     await page.locator('#mimi').click({ force: true }); // it bobs, so it is never "stable"
