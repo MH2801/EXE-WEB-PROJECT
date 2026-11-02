@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { TUNING } from '../content/tuning';
+import { hideLanding, onEnter, ready, showProgress } from '../landing';
 import { FONT_BODY, FONT_DISPLAY } from '../view/theme';
 
 const IMAGES = [
@@ -16,17 +17,40 @@ const V2_SVGS = [
   'mom', 'robot', 'cashier', 'helper', 'door', 'chest', 'gate', 'cart', 'home', 'dusk',
 ];
 
+const DAY1 = new URLSearchParams(location.search).has('day1');
+
 export class Boot extends Phaser.Scene {
+  private created = false;
+  private target: 'Home' | 'WordBook' | 'Parent' | null = null;
+
   constructor() {
     super('Boot');
   }
 
-  preload(): void {
-    const { gameW: w, gameH: h } = TUNING;
-    const bar = this.add.graphics();
-    this.load.on('progress', (p: number) => {
-      bar.clear().fillStyle(0x3aa8ff, 1).fillRoundedRect(w / 2 - 300, h / 2 - 20, 600 * p, 40, 20);
+  init(): void {
+    if (DAY1) {
+      hideLanding();
+      return;
+    }
+    onEnter((t) => {
+      try {
+        (this.sound as Phaser.Sound.WebAudioSoundManager).context?.resume().catch(() => {}); // the tap is the user gesture browsers need
+      } catch (e) {
+        console.error(e);
+      }
+      this.target = t;
+      if (this.created) this.go();
     });
+    // A hung download must not hold the buttons back: at the limit, give up on files still in flight.
+    setTimeout(() => {
+      ready();
+      if (this.created) return;
+      for (const f of [...this.load.inflight]) this.load.nextFile(f, false); // loaderror gives each a placeholder
+    }, Math.max(0, TUNING.landing.maxWaitMs - performance.now()));
+  }
+
+  preload(): void {
+    this.load.on('progress', (p: number) => showProgress(p));
     this.load.on('loaderror', (file: Phaser.Loader.File) => this.placeholder(file.key));
     this.load.setPath(import.meta.env.BASE_URL + 'assets');
     for (const k of IMAGES) this.load.image(k, `${k}.webp`);
@@ -44,10 +68,21 @@ export class Boot extends Phaser.Scene {
   create(): void {
     // A file that downloads but cannot decode fires no loaderror.
     for (const k of V2_SVGS) if (!this.textures.exists(`v2_${k}`)) this.placeholder(`v2_${k}`);
-    const enter = () => this.scene.start(new URLSearchParams(location.search).has('day1') ? 'Title' : 'Home');
+    this.created = true;
+    if (this.target) this.go(); // tapped while the last assets were landing
     // The probe text spans both unicode-range subsets; the default space would leave the Vietnamese files unloaded.
     const fonts = [FONT_DISPLAY, FONT_BODY].flatMap((f) => [700, 800].map((w) => document.fonts.load(`${w} 40px ${f}`, 'Aạ')));
     const limit = new Promise((done) => setTimeout(done, TUNING.fontWaitMs));
-    Promise.race([Promise.all(fonts), limit]).then(enter, enter); // a late or failed font never blocks entry
+    const done = DAY1 ? () => this.scene.start('Title') : ready;
+    Promise.race([Promise.all(fonts), limit]).then(done, done); // a late or failed font never blocks entry
+  }
+
+  private go(): void {
+    if (this.target) {
+      const t = this.target;
+      this.target = null;
+      hideLanding();
+      this.scene.start(t, t === 'Parent' ? { from: 'Home' } : undefined);
+    }
   }
 }

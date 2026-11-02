@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { TUNING } from './content/tuning';
+import { CSS } from './view/theme';
 import { Boot } from './scenes/Boot';
 import { Home } from './scenes/Home';
 import { Memory } from './scenes/Memory';
@@ -13,7 +14,7 @@ const game = new Phaser.Game({
   type: Phaser.AUTO,
   width: TUNING.gameW,
   height: TUNING.gameH,
-  backgroundColor: '#FFF4DC',
+  backgroundColor: CSS.sky,
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,

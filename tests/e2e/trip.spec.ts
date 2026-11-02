@@ -41,6 +41,13 @@ async function waitFor(what: () => Promise<boolean>, ms = 30_000) {
   await expect(async () => expect(await what()).toBe(true)).toPass({ timeout: ms, intervals: [200] });
 }
 
+/** Taps Play on the landing (it waits until loading ends) and waits for Home. */
+async function playFromLanding(page: Page) {
+  await page.locator('#play').click();
+  await waitFor(async () => (await phase(page)) === 'Home');
+  await page.waitForTimeout(500);
+}
+
 /** Opens Home (not Day 1). `save` is written once, so a reload keeps whatever the game wrote since. */
 async function open(page: Page, save: TripSave | null, query = `seed=${SEED}`) {
   const errors: string[] = [];
@@ -54,9 +61,8 @@ async function open(page: Page, save: TripSave | null, query = `seed=${SEED}`) {
       }
     }, save);
   }
-  await page.goto(`/?${query}`);
-  await waitFor(async () => (await phase(page)) === 'Home');
-  await page.waitForTimeout(500);
+  await page.goto(`/?${query}`, { waitUntil: 'domcontentloaded' }); // hung fonts hold the load event
+  await playFromLanding(page);
   return errors;
 }
 
@@ -157,7 +163,7 @@ test.describe('trips', () => {
     expect(seen.at(-1)).toBe('believed');
     expect(Object.values((await st(page))!.brain).some((r) => r.state === 'believed')).toBe(true);
     await page.reload();
-    await waitFor(async () => (await phase(page)) === 'Home');
+    await playFromLanding(page);
     const save = await readSave(page);
     expect(save.trips).toBe(1); // nothing was written
     expect(Object.values(states(save))).not.toContain('believed');

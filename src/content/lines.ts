@@ -52,6 +52,7 @@ const DAY1_LINES = {
   'mimi.what_this': { speaker: 'mimi', en: 'Hmm… what is this?', vi: 'Ừm… đây là gì nhỉ?' },
   'mimi.go': { speaker: 'mimi', en: "Let's go!", vi: 'Đi thôi!' },
   'mimi.open': { speaker: 'mimi', en: 'Open, please!', vi: 'Mở giúp tớ với!' },
+  'mimi.hi': { speaker: 'mimi', en: 'Hi!', vi: 'Chào cậu!' },
   'mimi.sleepy': { speaker: 'mimi', en: 'So sleepy…', vi: 'Buồn ngủ quá…' },
   'mimi.remember_v2': { speaker: 'mimi', en: 'I remember!', vi: 'Tớ nhớ rồi!' },
   'robot.yum': { speaker: 'robot', en: 'Yum! Thank you!', vi: 'Ngon quá! Cảm ơn cậu!' },

@@ -12,6 +12,11 @@ export const TUNING = {
   speechPerCharMs: 90, // B
   minHitPx: 120, // B
   fontWaitMs: 2000, // B, longest wait for fonts before the first scene
+  // Landing page that hosts loading (addendum 3).
+  landing: {
+    maxWaitMs: 8000, // B: buttons show by now, counted from page start, even if an asset hangs. Change when real devices load slower or faster.
+    happyMs: 1200, // B: how long Mimi shows her happy face after a tap. Change when it feels too short or too long.
+  },
   yesFill: 0x1e7a44, // B: white label on it = 5.35:1 (WCAG; spec 14 needs 4.5)
   noFill: 0xc23a33, // B: white label on it = 5.32:1
   choiceLabel: '#ffffff', // B

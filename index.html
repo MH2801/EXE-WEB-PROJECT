@@ -14,10 +14,75 @@
       @font-face { font-family: 'Nunito'; font-weight: 700; font-display: swap; src: url(/fonts/nunito-vietnamese-700-normal.woff2) format('woff2'); unicode-range: U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB; }
       @font-face { font-family: 'Nunito'; font-weight: 800; font-display: swap; src: url(/fonts/nunito-latin-800-normal.woff2) format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
       @font-face { font-family: 'Nunito'; font-weight: 800; font-display: swap; src: url(/fonts/nunito-vietnamese-800-normal.woff2) format('woff2'); unicode-range: U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB; }
-      html, body { margin: 0; height: 100%; background: #FFF4DC; overflow: hidden; }
+      html, body { margin: 0; height: 100%; background: #BFE6FF; overflow: hidden; }
+      /* Landing: plain HTML over the canvas. It is the loading screen too (addendum 3). */
+      #landing { position: fixed; inset: 0; z-index: 10; overflow-y: auto; background: #BFE6FF; color: #1B2470; font-family: 'Nunito', sans-serif; font-weight: 700; }
+      #landing button { font: inherit; color: inherit; border: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+      #landing button:focus-visible { outline: 4px solid #1F2270; outline-offset: 4px; }
+      .hero { position: relative; height: 100vh; height: 100dvh; overflow: hidden; background: url(/assets/v2/home.svg) center bottom / cover no-repeat; }
+      .logo { position: absolute; left: 3vmin; top: 3vmin; margin: 0; padding: 1vmin 3vmin; background: #fff; border-radius: 3vmin; font: 800 7vmin/1.2 'Baloo 2', sans-serif; color: #1F2270; transform: rotate(-3deg); box-shadow: 0 1vmin 0 rgba(31, 34, 112, .25); }
+      .bar { position: absolute; left: 4vmin; top: 17vmin; width: 40vmin; height: 3vmin; border-radius: 3vmin; background: #1F2270; transition: opacity .3s; }
+      .bar i { display: block; height: 100%; width: calc(var(--p, 0) * 100%); border-radius: 3vmin; background: #FFC83D; }
+      .bar img { position: absolute; top: -2.5vmin; left: calc(var(--p, 0) * 100%); width: 8vmin; height: 8vmin; margin-left: -4vmin; border-radius: 50%; background: #fff; object-fit: cover; object-position: top; }
+      .ready .bar { opacity: 0; pointer-events: none; }
+      #mimi { position: absolute; left: 4vmin; bottom: 0; width: 46vmin; height: 62vmin; padding: 0; background: none; transform-origin: 50% 100%; }
+      #mimi img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: bottom; pointer-events: none; }
+      #mimi .on, #mimi.happy .off { display: none; }
+      #mimi.happy .on { display: block; }
+      .actions { position: absolute; right: 5vmin; bottom: 8vmin; display: flex; flex-direction: column; align-items: center; gap: 3vmin; }
+      .gated { visibility: hidden; }
+      .ready .gated { visibility: visible; animation: pop .35s ease-out; }
+      .big, .mid { display: flex; align-items: center; justify-content: center; gap: 2vmin; border-radius: 6vmin; font: 800 8vmin/1 'Baloo 2', sans-serif; color: #1F2270; }
+      .big { min-width: 42vmin; min-height: 20vmin; background: #FFC83D; box-shadow: 0 1.4vmin 0 #C98F00; }
+      .mid { min-width: 36vmin; min-height: 14vmin; background: #fff; font-size: 5.5vmin; box-shadow: 0 1vmin 0 rgba(31, 34, 112, .3); }
+      .big svg { width: 9vmin; height: 9vmin; } .mid svg { width: 7vmin; height: 7vmin; }
+      #lock { position: absolute; right: 3vmin; top: 3vmin; width: 11vmin; height: 11vmin; min-width: 64px; min-height: 64px; padding: 0; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; }
+      #lock svg { width: 55%; height: 55%; }
+      .parents { box-sizing: border-box; min-height: 60vh; padding: 6vmin 5vmin 8vmin; background: #fff; font-size: 18px; line-height: 1.6; }
+      .parents div { max-width: 640px; margin: 0 auto; }
+      .parents h2 { margin: 0 0 12px; font: 800 28px/1.2 'Baloo 2', sans-serif; color: #1F2270; }
+      .parents p { margin: 0 0 12px; }
+      .parents button { margin-top: 8px; min-height: 56px; padding: 0 24px; border-radius: 28px; background: #1F2270; color: #fff; font-size: 18px; }
+      #mimi.wave { animation: wave .6s ease-in-out 2; }
+      .bob { animation: bob 2.4s ease-in-out infinite; }
+      @keyframes pop { from { transform: scale(.6); opacity: 0; } to { transform: none; opacity: 1; } }
+      @keyframes bob { 50% { transform: translateY(-1.2vmin); } }
+      @keyframes wave { 25% { transform: rotate(-6deg); } 75% { transform: rotate(6deg); } }
+      @media (prefers-reduced-motion: reduce) { #landing *, #landing *::before, #landing *::after { animation: none !important; transition: none !important; } }
     </style>
   </head>
   <body>
+    <main id="landing">
+      <section class="hero">
+        <h1 class="logo">Dạy tớ đi</h1>
+        <div class="bar" id="bar" aria-hidden="true"><i></i><img src="/assets/v2/mimi_idle.svg" alt="" /></div>
+        <button id="mimi" class="bob" type="button" aria-label="Mimi">
+          <img class="off" src="/assets/v2/mimi_idle.svg" alt="" /><img class="on" src="/assets/v2/mimi_happy.svg" alt="" />
+        </button>
+        <button id="lock" class="gated" type="button" data-go="Parent" aria-label="Parents">
+          <svg viewBox="0 0 24 24" fill="#1F2270" aria-hidden="true"><path d="M7 10V7a5 5 0 0 1 10 0v3h1.5A1.5 1.5 0 0 1 20 11.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 20.5v-9A1.5 1.5 0 0 1 5.5 10zm2.5 0h5V7a2.5 2.5 0 0 0-5 0z"/></svg>
+        </button>
+        <div class="actions">
+          <button id="play" class="big gated" type="button" data-go="Home" aria-label="Play">
+            <svg viewBox="0 0 24 24" fill="#1F2270" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg>Play
+          </button>
+          <button id="words" class="mid gated" type="button" data-go="WordBook" aria-label="Mimi's words">
+            <svg viewBox="0 0 24 24" fill="#1F2270" aria-hidden="true"><path d="M5 3h12.5A1.5 1.5 0 0 1 19 4.5V19H6.5A1.5 1.5 0 0 0 5 20.5zm1.5 15.5H17.5V5H6.5zM5 20.5A1.5 1.5 0 0 1 6.5 19H19v2H6.5A1.5 1.5 0 0 1 5 20.5z"/></svg>Mimi's words
+          </button>
+        </div>
+      </section>
+      <section class="parents" lang="vi">
+        <div>
+          <h2>Dành cho phụ huynh</h2>
+          <p>Bé dạy tiếng Anh cho Mimi, chú thỏ máy. Mimi học được gì thì trò chơi đổi theo điều đó.</p>
+          <p>Phù hợp cho bé từ 4 tuổi. Bé không cần biết đọc.</p>
+          <p>Không có dữ liệu nào rời khỏi máy. Không tài khoản, không quảng cáo, không ghi âm.</p>
+          <p>Muốn bé chơi lại từ đầu: mở Khu vực phụ huynh, rồi bấm nút “Chơi lại”.</p>
+          <button class="gated" type="button" data-go="Parent" aria-label="Mở khu vực phụ huynh">Khu vực phụ huynh</button>
+        </div>
+      </section>
+    </main>
+    <script>if (/[?&]day1\b/.test(location.search)) document.getElementById('landing').remove();</script>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
