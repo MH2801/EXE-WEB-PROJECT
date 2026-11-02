@@ -36,11 +36,11 @@ export function playTrip(save: TripSave, seed: number, events: TripEvent[]): Tri
   return { state: cur.state, effects: all, per };
 }
 
-/** A save where apple plus `known` are remembered and the rest are unknown. */
+/** A save where apple plus `known` are remembered and the rest are unknown. Trip 2 by default: trip 1 locks the safe door. */
 export function mkSave(known: readonly WordId[] = [], over: Partial<TripSave> = {}): TripSave {
   const brain = freshBrain();
   for (const w of known) brain[w] = { ...brain[w], state: 'remembered' };
-  return { ...defaultTripSave(), brain, ...over };
+  return { ...defaultTripSave(), trips: 1, brain, ...over };
 }
 
 export const allWordsSave = (): TripSave => mkSave(WORDS.map((d) => d.id));

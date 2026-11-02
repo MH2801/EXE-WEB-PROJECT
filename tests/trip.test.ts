@@ -597,3 +597,26 @@ describe('the bubble changes at once (GDD 6, R25)', () => {
     expect(mem).toBeGreaterThan(bub);
   });
 });
+
+describe('first-trip lock (addendum 6)', () => {
+  const first = mkSave([], { trips: 0 });
+  it('trip 1: a safe-door tap at the fork changes nothing and plays nothing', () => {
+    for (const save of [first, mkSave(['banana', 'orange'], { trips: 0 }), mkSave(['banana', 'orange', 'lemon', 'grape'], { trips: 0 })]) {
+      for (let seed = 1; seed <= 20; seed++) {
+        let r = settle(startTrip(save, seed));
+        for (let i = 0; i < 50 && r.state.phase !== 'fork'; i++) r = settle(step(r.state, legalEvents(r.state)[0]!));
+        expect(r.state.phase).toBe('fork');
+        const before = structuredClone(r.state);
+        const out = step(r.state, SAFE);
+        expect(out.effects).toHaveLength(0);
+        expect(out.state).toEqual(before);
+      }
+    }
+  });
+  it('trip 1: the "?" door still opens the teach room', () => {
+    expect(playTrip(first, SEED, [MYSTERY]).state.phase).toBe('teach');
+  });
+  it('trip 2: the safe door opens the chest', () => {
+    expect(playTrip(mkSave([], { trips: 1 }), SEED, [SAFE]).state.phase).toBe('chest');
+  });
+});

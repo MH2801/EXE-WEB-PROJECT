@@ -201,7 +201,7 @@ export const TUNING = {
       dialogue: { x: 1050, y: 228, w: 860 }, // B, box centre and width (x 620-1480, y 143-313): clear of her bubble, the gears and the order row
       map: { y: 700, x0: 260, x1: 1400, line: 10, node: 22 }, // B, path and its stops
       floor: { y: 740, h: 201 }, // B, lighter strip under every room
-      door: { w: 300, h: 420, y: 740, safeX: 900, mysteryX: 1300, glowW: 420, glowH: 440, glowDy: 25, glowAlpha: 0.35, badge: 84, icon: 130, shakeDeg: 2.5, shakeMs: 60, shakes: 1, openMs: 260, openX: 0.12, lightW: 0.8, lightH: 0.9, lightScale: 1.35, lightAlpha: 0.5 }, // B, both doors the same size and badge (GDD 6); the "?" glow is Sun and stops below the dialogue box (y 313)
+      door: { w: 300, h: 420, y: 740, safeX: 900, mysteryX: 1300, glowW: 420, glowH: 440, glowDy: 25, glowAlpha: 0.35, badge: 84, icon: 130, shakeDeg: 2.5, shakeMs: 60, shakes: 1, openMs: 260, openX: 0.12, lightW: 0.8, lightH: 0.9, lightScale: 1.35, lightAlpha: 0.5, lock: { dy: 122, w: 90, h: 72, r: 14, shackle: 28, keyhole: 9, jiggleDeg: 8, jiggleMs: 70 } }, // B, both doors the same size and badge (GDD 6); the "?" glow is Sun and stops below the dialogue box (y 313); lock = trip 1's closed safe door (addendum 5.4 beat 5)
       chest: { x: 1100, y: 740, px: 360, bigPx: 520, lidCut: 0.46, lidRise: 80, lidDeg: -16, shakePx: 7, shakeMs: 70, shakes: 2, openMs: 240, glowW: 0.74, glowH: 0.14 }, // B, lidCut = lid's edge in chest.svg (124 of 270)
       counter: { x: 1000, y: 700, w: 640, h: 80, itemPx: 220, label: 48 }, // B, the stall where Mimi shows what she knows
       teach: {

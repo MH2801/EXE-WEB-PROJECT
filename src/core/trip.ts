@@ -222,7 +222,7 @@ function enterStall(s: TripState, word: WordId): Result {
 
 function onDoor(s: TripState, door: 'safe' | 'mystery'): Result {
   const r = roomOf(s);
-  if (r.kind !== 'fork') return noop(s);
+  if (r.kind !== 'fork' || (door === 'safe' && !r.safeOpen)) return noop(s); // the first trip always teaches
   const off: TripEffect = { t: 'doors', on: false };
   if (door === 'mystery' && r.teach) return enterTeach(s, r.teach, off);
   // The safe door skips the "?" slot (if there is one); no new word left means the mystery door is the big chest.

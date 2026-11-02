@@ -60,7 +60,7 @@ export class RoomView {
       case 'stall':
         return this.stall(room.word);
       case 'fork':
-        return this.fork();
+        return this.fork(room.safeOpen);
       case 'chest':
         return this.chest(room.big);
       case 'cashier':
@@ -322,10 +322,11 @@ export class RoomView {
   }
 
   /** Two doors of the same size, tap area and badge (GDD 6). The "?" door also glows (Sun, clear of the dialogue box); the other shows a chest. */
-  private fork(): void {
+  private fork(safeOpen: boolean): void {
     const d = V.door;
     const cy = d.y - d.h / 2;
     const make = (x: number, door: 'safe' | 'mystery') => {
+      if (door === 'safe' && !safeOpen) return this.lockedDoor(x, cy);
       if (door === 'mystery') this.add(this.scene.add.ellipse(x, cy + d.glowDy, d.glowW, d.glowH, COLORS.sun, d.glowAlpha).setDepth(9));
       const img = this.add(this.scene.add.image(x, d.y, 'v2_door').setOrigin(0.5, 1).setDisplaySize(d.w, d.h).setDepth(10));
       const iy = cy - V.look.doorIconDy;
@@ -343,6 +344,31 @@ export class RoomView {
     };
     make(d.safeX, 'safe');
     make(d.mysteryX, 'mystery');
+  }
+
+  /** Trip 1's safe door: closed, a small lock, no glow, no hop. A tap only jiggles the lock: no event, no sound, never a "wrong" signal. */
+  private lockedDoor(x: number, cy: number): void {
+    const d = V.door;
+    const k = d.lock;
+    const s = this.scene;
+    this.add(s.add.image(x, d.y, 'v2_door').setOrigin(0.5, 1).setDisplaySize(d.w, d.h).setDepth(10));
+    const iy = cy - V.look.doorIconDy;
+    this.add(s.add.circle(x, iy, d.badge, COLORS.paper).setStrokeStyle(V.look.lineBold, COLORS.ink).setDepth(11));
+    this.add(fitImage(s.add.image(x, iy, 'v2_chest'), d.icon).setDepth(11));
+    const lock = this.add(
+      s.add.graphics({ x, y: cy + k.dy }).setDepth(12)
+        .lineStyle(V.look.lineBold, COLORS.ink).beginPath().arc(0, -k.h / 2, k.shackle, Math.PI, 2 * Math.PI).strokePath()
+        .fillStyle(COLORS.paper).fillRoundedRect(-k.w / 2, -k.h / 2, k.w, k.h, k.r).strokeRoundedRect(-k.w / 2, -k.h / 2, k.w, k.h, k.r)
+        .fillStyle(COLORS.ink).fillCircle(0, 0, k.keyhole),
+    );
+    const z = this.add(s.add.zone(x, cy, d.w, d.h).setDepth(20).setInteractive());
+    this.spots.set('door_safe', { x, y: cy });
+    z.on('pointerdown', () => {
+      if (reducedMotion()) return;
+      s.tweens.killTweensOf(lock);
+      lock.setAngle(0);
+      s.tweens.add({ targets: lock, angle: { from: -k.jiggleDeg, to: k.jiggleDeg }, duration: k.jiggleMs, yoyo: true, repeat: 1, onComplete: () => lock.setAngle(0) });
+    });
   }
 
   private chest(big: boolean): void {

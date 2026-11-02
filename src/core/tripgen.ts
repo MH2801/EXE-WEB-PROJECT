@@ -6,7 +6,7 @@ import type { FruitId, WordId } from './types';
 export type TeachRoom = { word: WordId; stalls: [FruitId, FruitId, FruitId] };
 export type Room =
   | { kind: 'stall'; word: WordId }
-  | { kind: 'fork'; teach: TeachRoom | null; chestGears: number; bigChestGears: number }
+  | { kind: 'fork'; teach: TeachRoom | null; chestGears: number; bigChestGears: number; safeOpen: boolean }
   | { kind: 'gate' | 'robot'; word: WordId; hand: WordId[] }
   | { kind: 'cashier' };
 export type Trip = { pattern: 'A' | 'B' | 'C'; seed: number; rooms: Room[] };
@@ -43,8 +43,8 @@ const shuffle = <T>(xs: readonly T[], rnd: () => number): T[] => {
 
 const roll = (range: readonly [number, number], rnd: () => number) => range[0] + Math.floor(rnd() * (range[1] - range[0] + 1));
 
-// tripNo is part of the agreed signature; recency already lives in each word's lastTrip.
-export function generateTrip(brain: Brain, _tripNo: number, seed: number): Trip {
+// Recency lives in each word's lastTrip; tripNo only locks the safe door on the very first trip (addendum 6).
+export function generateTrip(brain: Brain, tripNo: number, seed: number): Trip {
   const rnd = makeRng(seed);
   const known = knownWords(brain); // never includes `believed`
   const pattern = patternFor(known.length);
@@ -74,7 +74,7 @@ export function generateTrip(brain: Brain, _tripNo: number, seed: number): Trip 
     if (kind === 'fork') {
       const first = WORDS.find((d) => brain[d.id].state === 'unknown');
       const teach = first ? { word: first.id, stalls: shuffle([first.answer, ...first.others], rnd) as TeachRoom['stalls'] } : null;
-      return { kind, teach, chestGears: roll(TUNING.trip.chestGears, rnd), bigChestGears: roll(TUNING.trip.bigChestGears, rnd) };
+      return { kind, teach, chestGears: roll(TUNING.trip.chestGears, rnd), bigChestGears: roll(TUNING.trip.bigChestGears, rnd), safeOpen: tripNo !== 1 };
     }
     const word = front();
     return { kind, word, hand: handFor(word) };

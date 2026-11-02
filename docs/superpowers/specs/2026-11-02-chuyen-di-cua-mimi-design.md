@@ -266,6 +266,11 @@ Tất cả là giá trị khởi đầu (B), nằm trong `tuning.ts`. Cách ki�
 | `music.volume` | 0.35 | Cha mẹ nói nhạc to hoặc nhỏ quá thì chỉnh |
 | `music.duckVolume` | 0.12 | Nghe lời thoại khó thì giảm |
 | `music.fadeMs` | 400 | Nhạc tụt hoặc lên nghe đột ngột thì tăng |
+| `landing.maxWaitMs` | 8000 | Slow devices show buttons too early: raise |
+| `landing.settleMs` | 400 | A real child still double-taps through Play onto Go: raise |
+| `onboarding.nudgeHandMs` | 4000 | Children tap before the hand appears every time: raise; children sit still: lower |
+| `onboarding.nudgeVoiceMs` | 9000 | Same as above |
+| `onboarding.learnAfter` | 2 | Children still hesitate on the third time: raise |
 | Thời gian một phòng | 10–15 giây | Chậm hơn thì cắt thoại |
 | Thời gian một chuyến | 2–4 phút | Dài hơn thì bớt phòng |
 | Số lần nghe từ mới trong chuyến đầu | Ít nhất 6 | Đếm bằng test |

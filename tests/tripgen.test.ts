@@ -150,3 +150,16 @@ describe('tripgen', () => {
     }
   });
 });
+
+describe('first-trip lock (addendum 6)', () => {
+  type Fork = Extract<Room, { kind: 'fork' }>;
+  const forkOf = (b: Brain, tripNo: number, s: number) => generateTrip(b, tripNo, s).rooms.find((r) => r.kind === 'fork') as Fork;
+  it('trip 1 locks the safe door; trip 2 and later open it, at every knowledge level', () => {
+    for (let n = 1; n <= WORDS.length; n++) {
+      for (let s = 0; s < 50; s++) {
+        expect(forkOf(brainWith(n), 1, s).safeOpen).toBe(false);
+        for (const tripNo of [2, 3, 10]) expect(forkOf(brainWith(n), tripNo, s).safeOpen).toBe(true);
+      }
+    }
+  });
+});
