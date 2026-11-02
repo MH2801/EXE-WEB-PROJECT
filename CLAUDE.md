@@ -33,7 +33,7 @@
 | Known mistakes | `docs/lessons.md` |
 | Idea team's originals | `docs/source/` (read only the part a task cites) |
 
-Product docs are in Vietnamese; code and identifiers in English. Do not rewrite an accepted ADR. When the founder corrects you, add to `docs/lessons.md`.
+New docs and subagent prompts are in English; existing Vietnamese docs stay as they are. Code and identifiers are in English. Do not rewrite an accepted ADR. When the founder corrects you, add to `docs/lessons.md`.
 
 ## Session start
 Read `docs/HANDOFF.md` and `docs/lessons.md`. Report in about 5 lines. Do not start work unasked. Before ending a session that changed the state, update `docs/HANDOFF.md`.
