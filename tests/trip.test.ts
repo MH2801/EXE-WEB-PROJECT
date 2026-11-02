@@ -528,6 +528,7 @@ describe('hidden truth, widened', () => {
   };
   const cases: [string, TripSave][] = [
     ['A banana', A],
+    ['A banana, trip 1 (safe door locked)', mkSave([], { trips: 0 })],
     ['B lemon', B],
     ['C red (colour)', C],
     ['C yellow (colour)', mkSave(['banana', 'orange', 'lemon', 'grape', 'red'])],
